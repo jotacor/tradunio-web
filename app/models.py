@@ -1,42 +1,25 @@
 from . import db
 
 
-class User(db.Model):
-    __tablename__ = 'users'
+class Club(db.Model):
+    __tablename__ = 'clubs'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), primary_key=True)
-    #players_id = db.Column(db.Integer, db.ForeignKey('players.id'))
-    #userdata_id = db.Column(db.Integer, db.ForeignKey('userdata.id'))
-    #transactions_id = db.Column(db.Integer, db.ForeignKey('transactions.id'))
+    name = db.Column(db.String(64), unique=True, index=True)
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return 'User %r' % self.name
 
 
 class Player(db.Model):
     __tablename__ = 'players'
     id = db.Column(db.Integer, primary_key=True)
-    playername = db.Column(db.String(64))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    name = db.Column(db.String(64))
     position = db.Column(db.String(64))
-    club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
+    club = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
 
     def __repr__(self):
-        return '<Player %r>' % self.playername
-
-
-class Club(db.Model):
-    __tablename__ = 'clubs'
-    id = db.Column(db.Integer, primary_key=True)
-    clubname = db.Column(db.String(64), unique=True, index=True)
-
-    def __repr__(self):
-        return '<Clubs %r>' % self.clubname
-
-
-class Owner(db.Model):
-    __tablename__ = 'owners'
-    player_id = db.Column(db.Integer, db.ForeignKey('players.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+        return 'Name %r, Position %r, Club %r' % (self.name, self.position, self.club)
 
 
 class Points(db.Model):
@@ -46,7 +29,7 @@ class Points(db.Model):
     points = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
-        return '<Points %r>' % self.points
+        return 'Points %r' % self.points
 
 
 class Price(db.Model):
@@ -56,25 +39,47 @@ class Price(db.Model):
     price = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
-        return '<Price %r>' % self.points
+        return 'Price %r' % self.price
 
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
-    idp = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
-    idu = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    type = db.Column(db.String(64), doc='Buy/Sell')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
+    sort = db.Column(db.String(64), doc='Buy/Sell')
     price = db.Column(db.Integer)
     date = db.Column(db.Date, primary_key=True)
 
+    def __repr__(self):
+        return 'Transaction %r' % self.player_id
 
-#class Role(db.Model):
-#    __tablename__ = 'roles'
-#    id = db.Column(db.Integer, primary_key=True)
-#    name = db.Column(db.String(64), unique=True)
-#    users = db.relationship('User', backref='role', lazy='dynamic')
-#
-#    def __repr__(self):
-#        return '<Role %r>' % self.name
+
+class Userdata(db.Model):
+    __tablename__ = 'usersdata'
+    id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    date = db.Column(db.Date, primary_key=True)
+    points = db.Column(db.Integer, nullable=False)
+    money = db.Column(db.Integer, nullable=False)
+    teamvalue = db.Column(db.Integer, nullable=False)
+    maxbid = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return 'Userdata %r' % self.points
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), primary_key=True)
+    players = db.relationship('Player',
+                            backref=db.backref('user', lazy='joined'),
+                            lazy='dynamic',
+                            cascade='all, delete-orphan')
+
+    userdata = db.relationship('Userdata', foreign_keys=[Userdata.id], lazy='dynamic')
+    transactions = db.relationship('Transaction', lazy='dynamic')
+
+    def __repr__(self):
+        return 'Name %r, Players %r, Userdata %r, Transactions %r' % (self.name, self.players, self.userdata, self.transactions)
 
 
