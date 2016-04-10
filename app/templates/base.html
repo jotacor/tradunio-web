@@ -1,6 +1,6 @@
 {% extends "bootstrap/base.html" %}
 
-{% block title %}Flasky{% endblock %}
+{% block title %}Tradunio{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -12,19 +12,18 @@
 <div class="navbar navbar-inverse" role="navigation">
     <div class="container">
         <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                <img alt="Brand" src="{{ url_for('static', filename='favicon.ico') }}">
+            </a>
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">Flasky</a>
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Tradunio</a>
         </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="{{ url_for('main.index') }}">Home</a></li>
-            </ul>
-        </div>
+        {% block logged %}{% endblock %}
     </div>
 </div>
 {% endblock %}

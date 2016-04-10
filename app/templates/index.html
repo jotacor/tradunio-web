@@ -1,16 +1,13 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Flasky{% endblock %}
+{% block title %}Tradunio{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-    <h1>Hello, {% if name %}{{ name }}{% else %}Stranger{% endif %}!</h1>
-    {% if not known %}
-    <p>Pleased to meet you!</p>
-    {% else %}
-    <p>Happy to see you again!</p>
-    {% endif %}
+    <h1>Welcome to Tradunio</h1>
+    <p>With Tradunio you will be able to know everything about your players and your opponents.</p>
+    <p>We DON'T store passwords.</p>
 </div>
 {{ wtf.quick_form(form) }}
 {% endblock %}

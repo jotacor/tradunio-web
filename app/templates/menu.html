@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Tradunio{% endblock %}
+
+{% block logged %}
+<div class="navbar-collapse collapse">
+    <ul class="nav navbar-nav">
+        <li><a href="{{ url_for('main.sell') }}">Sell</a></li>
+        <li><a href="{{ url_for('main.buy') }}">Buy</a></li>
+        <li><a href="{{ url_for('main.update') }}">Update</a></li>
+        <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Welcome {{ username }} <small>{{ submenu }}</small></h1>
+    <div class="row">
+        <div class="col-md-2">Players</br>19</div>
+        <div class="col-md-3">Teamvalue</br>12.345.678€</div>
+        <div class="col-md-2">Money</br>1.234.567€</div>
+        <div class="col-md-2">Max.bid</br>5.678.910€</div>
+        <div class="col-md-2">Points</br>528</div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-striped">
+            {% if function %}
+            <tr>
+                <th>Player</th>
+                <th>Position</th>
+                <th>Month</th>
+                <th>Week</th>
+                <th>Day</th>
+                <th>Last gamedays</th>
+                <th>Streak</th>
+                {% if function == 'sell' %} <th>Purchase price</th>
+                {% else %} <th>Min. price</th> {% endif %}
+                <th>Market price</th>
+                {% if function == 'buy' %} <th>Profit</th>
+                {% else %} <th>Owner</th> {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <th>Player</th>
+                <th>Club</th>
+                <th>Value</th>
+                <th>Points</th>
+                <th>Position</th>
+                <th>Last gamedays</th>
+                <th>Streak</th>
+            </tr>
+            {% endif %}
+
+            {% for player in players %}
+            <tr>
+                {% for data in player %}
+                <td>{{ data }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}
