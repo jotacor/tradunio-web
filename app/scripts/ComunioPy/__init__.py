@@ -23,15 +23,15 @@ user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 F
 
 
 class Comunio:
-    def __init__(self, username, password, user_id, community_id, league):
+    def __init__(self, username, password, league):
         self.username = username
         self.password = password
         self.domain = Leagues[league]
         self.session = requests.session()
-        self.myid = user_id
+        self.myid = None
         self.money = None
         self.teamvalue = None
-        self.community_id = community_id
+        self.community_id = None
         self.news = list()
         self.logged = self.login()
 
@@ -43,7 +43,6 @@ class Comunio:
                    "User-Agent": user_agent}
         req = self.session.post('http://' + self.domain + '/login.phtml', headers=headers, data=payload).content
         if 'puntos en proceso' in req or 'points in process' in req:
-            print 'Comunio webpage not available.'
             return False
 
         return self.load_info()  # Function to load the account information
@@ -53,11 +52,10 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/login.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/team_news.phtml', headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
 
         estado = soup.find('div', {'id': 'content'}).find('div', {'id': 'manager'}).string
         if estado:
-            print estado.strip()
             return False
 
         [s.extract() for s in soup('strong')]
@@ -95,7 +93,7 @@ class Comunio:
             headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                        'Referer': 'http://' + self.domain + '/login.phtml', "User-Agent": user_agent}
             req = self.session.get('http://' + self.domain + '/team_news.phtml', headers=headers).content
-            soup = BeautifulSoup(req)
+            soup = BeautifulSoup(req, "html.parser")
             newsheader = soup.find_all('div', {'class', 'newsheader'})[1:]
             for index, i in enumerate(soup.find_all('div', {'class', 'article_content_text'})[1:]):
                 news_date = datetime.strptime(newsheader[index].span['title'][0:8], "%d.%m.%y").date()
@@ -185,7 +183,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/standings.phtml', "User-Agent": user_agent}
         soup = BeautifulSoup(self.session.get('http://' + self.domain + '/teamInfo.phtml?tid=' + str(self.community_id),
-                                              headers=headers).content)
+                                              headers=headers).content, "html.parser")
 
         headers_zo = {'Accept': '*/*', 'Referer': 'http://www.comuniazo.com/comunio/dinero',
                       'Host': 'www.comuniazo.com', 'X-Requested-With': 'XMLHttpRequest'}

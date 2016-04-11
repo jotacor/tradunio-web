@@ -5,7 +5,7 @@ from app.models import User, Club, Player, Points, Price, Transaction, Userdata
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
-app = create_app(os.getenv('TRADUNIO_CONFIG') or 'default')
+app = create_app(os.getenv('TRADUNIO_ENV') or 'default')
 manager = Manager(app)
 migrate = Migrate(app, db)
 

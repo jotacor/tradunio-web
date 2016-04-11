@@ -4,6 +4,7 @@ from ..models import User
 from ..email import send_email
 from . import main
 from .forms import NameForm
+from ..scripts import tradunio
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -64,5 +65,7 @@ def logout():
 def update():
     if not session.get('username', None):
         return redirect(url_for('.index'))
+
+    tradunio.update(session.get('username'), session.get('password'))
 
     return render_template('menu.html', username=session.get('username'))
