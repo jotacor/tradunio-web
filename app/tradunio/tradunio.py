@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from ComunioPy import Comunio
 from ConfigParser import ConfigParser
 from datetime import date, timedelta, datetime
-from ..models import User, Userdata, Transaction, Player, Club
+from ..models import User, Userdata, Transaction, Player, Club, Price, Points
 from operator import itemgetter
 import re
 import requests
@@ -39,7 +39,7 @@ def update(login, passwd):
     """
     com = Comunio(login, passwd, 'BBVA')
     users = set_users_data(com)
-    set_transactions(com)
+
     for user in users:
         players = set_user_players(com, user)
         for player in players:
@@ -48,7 +48,7 @@ def update(login, passwd):
                 continue
             set_player_data(player_id=player.id, playername=player.name)
 
-
+    set_transactions(com)
 
 
 def buy():
@@ -329,25 +329,31 @@ def set_player_data(player_id=None, playername=None):
     days_left = days_wo_price(player_id)
     prices, points = list(), list()
     if days_left:
-        dates, prices, points = get_player_data(playername=playername)
+        dates, prices, points_all = get_player_data(playername=playername)
         if days_left >= 365:
             days_left = len(dates)
 
-        if not db.rowcount('SELECT idp FROM players WHERE idp=%s' % player_id):
+        player = Player.query.filter_by(id=player_id).first()
+        if not player:
             playername, position, club_id, price = com.get_player_info(player_id)
-            set_new_player(player_id, playername, position, club_id)
+            player = set_new_player(player_id, playername, position, club_id)
 
-        db.many_commit_query('INSERT IGNORE INTO prices (idp,date,price) VALUES (%s' % player_id + ',%s,%s)',
-                             zip(dates[:days_left], prices[:days_left]))
-        for point in points:
-            db.nocommit_query('INSERT INTO points (idp,gameday,points) VALUES (%s,%s,%s) \
-                              ON DUPLICATE KEY UPDATE points=%s' % (player_id, point[0], point[1], point[1]))
-        db.commit()
+        for dat, price in zip(dates[:days_left], prices[:days_left]):
+            if not Price.query.filter_by(id=player.id).filter_by(date=dat).first():
+                pr = Price(id=player.id, date=dat, price=price)
+                db.session.add(pr)
 
-    return prices, points
+        for gameday, points in points_all:
+            if not Points.query.filter_by(id=player.id).filter_by(gameday=gameday).first():
+                pt = Points(id=player.id, gameday=gameday, points=points)
+                db.session.add(pt)
+
+        db.session.commit()
+
+    return prices, points_all
 
 
-def set_new_player(player_id, playername, position, team_id):
+def set_new_player(player_id, playername, position, club_id):
     """
     Set new player in the database.
     :param player_id:
@@ -355,8 +361,11 @@ def set_new_player(player_id, playername, position, team_id):
     :param position:
     :param team_id:
     """
-    db.commit_query('INSERT IGNORE INTO players (idp,name,position,idcl) VALUES (%s,"%s","%s",%s)'
-                    % (player_id, playername, position, team_id))
+    c = Club.query.filter_by(id=club_id)
+    p = Player(id=player_id, name=playername, position=position, club=c)
+    db.session.add(p)
+    db.session.commit()
+    return p
 
 
 def set_transactions(com):
@@ -366,15 +375,15 @@ def set_transactions(com):
     until_date = db.session.query(db.func.max(Transaction.date).label('date')).first().date
     if not until_date:
         until_date = date.today() - timedelta(days=120)
-    until_date = until_date - timedelta(days=10)
+    else:
+        until_date = until_date - timedelta(days=10)
     news = com.get_news(until_date)
     for new in news:
         ndate, title, text = new
         if 'Fichajes' not in title:
             continue
         pattern = re.compile(
-            ur'(?:(?:\\n)?([(\S+ )]+?)(?: cambia por )([0-9\.,]*?)(?: .*? de )(.+?) a (.+?)\.)',
-            re.UNICODE)
+            ur'(?:(?:\\n)?([(\S+ )]+?)(?: cambia por )([0-9\.,]*?)(?: .*? de )(.+?) a (.+?)\.)', re.UNICODE)
         transactions = re.findall(pattern, text)
         for trans in transactions:
             playername, value, fr, to = trans
@@ -384,27 +393,27 @@ def set_transactions(com):
                 player = db.session.query(Player).filter(Player.name.like('%'+playername+'%')).first()
                 if 'Computer' in fr:
                     kind = 'Buy'
-                    user = db.session.query(User).filter(User.name.like('%'+to+'%')).first()
+                    user = db.session.query(User).filter(User.name.like('%' + to + '%')).first()
                     t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
                     db.session.add(t)
-                    db.session.commit()
                 elif 'Computer' in to:
                     kind = 'Sell'
-                    user_id = db.simple_query('SELECT idu FROM users WHERE name LIKE "%%%s%%"' % fr)[0][0]
-                    db.commit_query(
-                        'INSERT IGNORE INTO transactions (idp, idu, type, price, date) VALUES (%s,%s,"%s",%s,"%s")'
-                        % (player_id, user_id, kind, value, ndate))
+                    user = db.session.query(User).filter(User.name.like('%' + fr + '%')).first()
+                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                    db.session.add(t)
                 else:
                     kind = 'Buy'
-                    user_id = db.simple_query('SELECT idu FROM users WHERE name LIKE "%%%s%%"' % to)[0][0]
-                    db.commit_query(
-                        'INSERT IGNORE INTO transactions (idp, idu, type, price, date) VALUES (%s,%s,"%s",%s,"%s")'
-                        % (player_id, user_id, kind, value, ndate))
-                    user_id = db.simple_query('SELECT idu FROM users WHERE name LIKE "%%%s%%"' % fr)[0][0]
+                    user = db.session.query(User).filter(User.name.like('%' + to + '%')).first()
+                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                    db.session.add(t)
+
+                    user = db.session.query(User).filter(User.name.like('%' + fr + '%')).first()
                     kind = 'Sell'
-                    db.commit_query(
-                        'INSERT IGNORE INTO transactions (idp, idu, type, price, date) VALUES (%s,%s,"%s",%s,"%s")'
-                        % (player_id, user_id, kind, value, ndate))
+                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                    db.session.add(t)
+
+                db.session.commit()
+
             except IndexError:
                 # Player selled before having in database
                 pass
@@ -591,13 +600,12 @@ def days_wo_price(player_id):
     """
     max_date = db.session.query(db.func.max(Price.date).label('max_date')).first().max_date
 
-    try:
+    if not max_date:
+        res = 365
+    else:
         res = (date.today() - max_date).days
-    except TypeError:
-        res = 365
-
-    if not (0 < res < 365):
-        res = 365
+        if not (0 < res <= 365):
+            res = 365
 
     return res
 

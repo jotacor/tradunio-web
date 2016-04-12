@@ -4,6 +4,7 @@ from app import create_app, db
 from app.models import User, Club, Player, Points, Price, Transaction, Userdata
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
+from app.tradunio.update import update as tradunio_update
 
 app = create_app(os.getenv('TRADUNIO_ENV') or 'default')
 manager = Manager(app)
@@ -15,6 +16,16 @@ def make_shell_context():
                 Points=Points, Price=Price, Transaction=Transaction, Userdata=Userdata)
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
+
+
+@manager.option('-l', '--login', dest='login', default=None)
+@manager.option('-p', '--passwd', dest='passwd', default=None)
+def update(login, passwd):
+    """ Updates the database with new data from Comunio. """
+    if login is None or passwd is None:
+        print ("Give me login and password of Comunio to update the database.")
+        exit(1)
+    tradunio_update(login, passwd)
 
 
 @manager.command

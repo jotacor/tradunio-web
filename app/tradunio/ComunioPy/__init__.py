@@ -5,10 +5,8 @@ from bs4 import BeautifulSoup
 from datetime import date as dt
 from datetime import datetime
 import json
-import os
 import re
 import requests
-import sys
 import time
 
 Leagues = {'BBVA': 'www.comunio.es',
@@ -106,7 +104,7 @@ class Comunio:
             while more_news and first_news < 200:
                 other_news = BeautifulSoup(
                     self.session.post('http://' + self.domain + '/team_news.phtml', headers=headers,
-                                      data={'newsAction': 'reload', 'first_news': first_news}).content)
+                                      data={'newsAction': 'reload', 'first_news': first_news}).content, "html.parser")
                 newsheader = other_news.find_all('div', {'class', 'newsheader'})
                 for index, i in enumerate(other_news.find_all('div', {'class', 'article_content_text'})):
                     news_date = datetime.strptime(newsheader[index].span['title'][0:8], "%d.%m.%y").date()
@@ -130,7 +128,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/standings.phtml', headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         table = soup.find('table', {'id': 'tablestandings'}).find_all('tr')
         clasificacion = list()
         [clasificacion.append('%s\t%s\t%s\t%s\t%s' % (
@@ -147,7 +145,7 @@ class Comunio:
                    'Referer': 'http://' + self.domain + '/standings.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/playerInfo.phtml?pid=' + str(userid),
                                headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         # title = soup.title.string
         # community = soup.find_all('table', border=0)[1].a.text
         # username = re.search('\((.*?)\)', soup.find('div', id='title').text).group(1)
@@ -160,7 +158,7 @@ class Comunio:
             club_id = int(re.findall('\d+', i.find_all('img')[1]['src'])[0])
             value = float(cad[4].text.replace(".", ""))
             totalpoints = float(cad[5].text)
-            position = cad[6].text
+            position = self.translate_position(cad[6].text)
             players_info.append([player_id, name, club_id, club, value, totalpoints, position])
         return players_info
 
@@ -169,7 +167,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/standings.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/playerInfo.phtml?pid=' + userid, headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         info = list()
         for i in soup.find_all('td', {'class': 'name_cont'}):
             info.append(i.text.strip())
@@ -216,10 +214,10 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/tradableInfo.phtml?tid=' + str(player_id), headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         playername = soup.title.text.strip()
         rows = soup.find('table', cellspacing=1).find_all('tr')
-        position = rows[0].find_all('td')[1].text
+        position = self.translate_position(rows[0].find_all('td')[1].text)
         club_id = int(re.findall('\d+', rows[1].find_all('td')[1].img['src'])[0])
         for row in rows:
             try:
@@ -231,6 +229,77 @@ class Comunio:
 
         return [playername, position, club_id, price]
 
+    def get_player_data(self, playername=None):
+        """
+        Get prices from a player
+        :param playername: Name of the player.
+        :return: [dates], [prices], [points]
+        """
+        session = requests.session()
+        url_comuniazo = 'http://www.comuniazo.com'
+        user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:35.0) Gecko/20100101 Firefox/35.0'
+        headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
+                   'Referer': url_comuniazo,
+                   "User-Agent": user_agent}
+        url_jugadores = url_comuniazo + '/comunio/jugadores/'
+        suffix, lastname = '', ''
+        count = 0
+        dates, points, prices = list(), list(), list()
+        while True and len(dates) < 2:
+            playername = self.check_exceptions(playername)
+            req = session.get(url_jugadores + playername.replace(" ", "-").replace(".", "").replace("'", "") + suffix,
+                              headers=headers).content
+            dates_re = re.search("(\"[0-9 ][0-9] de \w+\",?,?)+", req)
+            try:
+                dates = dates_re.group(0).replace('"', '').split(",")
+                dates = self.translate_dates(dates)
+            except AttributeError:
+                if count == 0:
+                    suffix = '-2'
+                    count += 1
+                    continue
+                elif count == 1:
+                    lastname = playername.split(" ")[1]
+                    playername = playername.split(" ")[0]
+                    suffix = ''
+                    count += 1
+                    continue
+                elif count == 2:
+                    playername = lastname
+                    count += 1
+                    continue
+
+            data_re = re.search("data: \[(([0-9nul]+,?)+)\]", req)
+            if data_re is None:
+                pass
+            for price in data_re.group(1).split(','):
+                try:
+                    prices.append(int(price))
+                except ValueError:
+                    # No price
+                    pass
+
+            try:
+                html = BeautifulSoup(req, "html.parser")
+                points_rows = html.find('table', {'class': 'points-list'}).find_all('tr')
+                for row in points_rows:
+                    gameday = int(row.td.text)
+                    if row.div:
+                        points.append([gameday, int(row.div.text)])
+                    else:
+                        points.append([gameday, 0])
+            except AttributeError:
+                # Player without points
+                pass
+
+            if suffix == '-2' or len(dates) > 2:
+                break
+            else:
+                suffix = '-2'
+
+        return dates, prices, points
+
+
     def info_player_id(self, playername):
         """Get id using name football player
         :param playername:
@@ -240,7 +309,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://stats.comunio.es/search.php?name=' + playername, headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         for i in soup.find_all('a', {'class', 'nowrap'}):
             number = re.search("([0-9]+)-", str(i)).group(1)
             break  # Solo devuelve la primera coincidencia
@@ -254,7 +323,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/clubInfo.phtml?cid=' + cid, headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         plist = list()
         for i in soup.find('table', cellpadding=2).find_all('tr')[1:]:
             plist.append('%s\t%s\t%s\t%s\t%s' % (
@@ -272,7 +341,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain, headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         for i in soup.find('table', cellpadding=2).find_all('tr'):
             # Get teamid from the bets
             team1 = i.find('a')['title']
@@ -291,7 +360,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/standings.phtml', headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         for i in soup.find('table', cellpadding=2).find_all('tr'):
             try:
                 if user == i.find_all('td')[2].text.encode('utf8'):
@@ -311,7 +380,7 @@ class Comunio:
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/teamInfo.phtml?tid=' + str(community_id),
                                headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
 
         current_year = dt.today().year
         current_month = dt.today().month
@@ -331,7 +400,7 @@ class Comunio:
                 year_flag = 1
             date = str(current_year - year_flag) + columns[6].text[3:5] + columns[6].text[:2]
             owner = columns[7].text.strip()
-            position = columns[8].text.strip()
+            position = self.translate_position(columns[8].text.strip())
             # Comprobamos si solamente queremos los de la computadora o no
             if (only_computer and owner == 'Computer') or not only_computer:
                 on_sale.append([player_id, playername, team_id, team, min_price, market_price, points, date, owner, position])
@@ -346,7 +415,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/exchangemarket.phtml?viewoffers_x=', headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         table = list()
         for i in soup.find('table', {'class', 'tablecontent03'}).find_all('tr')[1:]:
             player_id, player, who, team_id, team, price, bid_date, trans_date, status = self.parse_bid_table(i)
@@ -361,7 +430,7 @@ class Comunio:
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
         req = self.session.get('http://' + self.domain + '/exchangemarket.phtml?viewoffers_x=', headers=headers).content
-        soup = BeautifulSoup(req)
+        soup = BeautifulSoup(req, "html.parser")
         table = list()
         for i in soup.find_all('table', {'class', 'tablecontent03'})[1].find_all('tr')[1:]:
             player_id, player, owner, team_id, team, price, bid_date, trans_date, status = self.parse_bid_table(i)
@@ -385,3 +454,53 @@ class Comunio:
         trans_date = columns[5].text
         status = columns[6].text
         return player_id, player, owner, team_id, team, price, bid_date, trans_date, status
+
+    @staticmethod
+    def translate_position(position):
+        positions = {'Portero': 'Goalkeeper', 'Defensa': 'Defender', 'Centrocampista': 'Midfielder',
+                     'Delantero': 'Striker'}
+        return positions.get(position, position)
+
+    @staticmethod
+    def translate_dates(dates):
+        """
+        Translates dates format from 'xx de Month' or 'dd.mm' to date('yyyy-mm-dd')
+        :param dates: Array dates from Comuniazo or Comunio.
+        :return: [[date,]]
+        """
+        formatted_dates = list()
+        year = str(dt.today().year)
+        for dat in dates:
+            if dat == '':
+                continue
+            day = dat[:2]
+            mont = dat[6:]
+            if int(day) < 10:
+                day = '0' + day[1]
+            if mont != '':
+                # Month from Comuniazo
+                month = \
+                    {'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+                     'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+                     'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'}[mont]
+            else:
+                # Month from Comunio
+                month = dat[3:5]
+
+            if month + day == '0101' or (formatted_dates and int(month) > formatted_dates[-1].month):
+                # One year less
+                year = str(year - 1)
+
+            p_date = datetime.strptime('%s-%s-%s' % (year, month, day), "%Y-%m-%d").date()
+            formatted_dates.append(p_date)
+        return formatted_dates
+
+    @staticmethod
+    def check_exceptions(playername):
+        """
+        Fix exceptions for a player name between Comunio and Comuniazo.
+        :param playername: Name of the football player.
+        :return: Corrected name.
+        """
+        exceptions = {'Banega': 'Ever Banega', 'Mikel': u'Mikel González', u'Isma López': u'Ismael López'}
+        return exceptions.get(playername, playername)

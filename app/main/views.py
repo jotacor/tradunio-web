@@ -1,14 +1,13 @@
 from flask import render_template, session, redirect, url_for, current_app
 from .. import db
-from ..models import User
 from ..email import send_email
 from . import main
 from .forms import NameForm
-from ..scripts import tradunio
-
+from ..tradunio.update import update as tradunio_update
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
+    db.create_all()
     if session.get('username', None):
         return redirect(url_for('.menu'))
 
@@ -66,6 +65,6 @@ def update():
     if not session.get('username', None):
         return redirect(url_for('.index'))
 
-    tradunio.update(session.get('username'), session.get('password'))
+    tradunio_update(session.get('username'), session.get('password'))
 
     return render_template('menu.html', username=session.get('username'))
