@@ -469,7 +469,7 @@ class Comunio:
         :return: [[date,]]
         """
         formatted_dates = list()
-        year = str(dt.today().year)
+        year = dt.today().year
         for dat in dates:
             if dat == '':
                 continue
