@@ -38,10 +38,10 @@ def set_users_data(com):
     users_data = list()
     users_info = com.get_users_info()
     for user in users_info:
-        [username, user_id, user_points, teamvalue, money, maxbid] = user
+        [name, username, user_id, user_points, teamvalue, money, maxbid] = user
         u = User.query.filter_by(id=user_id).first()
         if not u:
-            u = User(id=user_id, name=username)
+            u = User(id=user_id, name=name, username=username)
 
         ud = Userdata.query.filter_by(id=user_id).filter_by(date=date.today()).first()
         if not ud:
@@ -143,29 +143,39 @@ def set_transactions(com):
                 if 'Computer' in fr:
                     kind = 'Buy'
                     user = db.session.query(User).filter(User.name.like('%' + to + '%')).first()
-                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
-                    db.session.add(t)
+                    if not exist_transaction(player, user, kind, value, ndate):
+                        t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                        db.session.add(t)
                 elif 'Computer' in to:
                     kind = 'Sell'
                     user = db.session.query(User).filter(User.name.like('%' + fr + '%')).first()
-                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
-                    db.session.add(t)
+                    if not exist_transaction(player, user, kind, value, ndate):
+                        t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                        db.session.add(t)
                 else:
                     kind = 'Buy'
                     user = db.session.query(User).filter(User.name.like('%' + to + '%')).first()
-                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
-                    db.session.add(t)
+                    if not exist_transaction(player, user, kind, value, ndate):
+                        t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                        db.session.add(t)
 
                     user = db.session.query(User).filter(User.name.like('%' + fr + '%')).first()
                     kind = 'Sell'
-                    t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
-                    db.session.add(t)
+                    if not exist_transaction(player, user, kind, value, ndate):
+                        t = Transaction(player_id=player.id, user_id=user.id, sort=kind, price=value, date=ndate)
+                        db.session.add(t)
 
                 db.session.commit()
 
             except AttributeError:
                 # Player selled before having in database
                 pass
+
+
+def exist_transaction(player, user, kind, value, ndate):
+    return db.session.query(Transaction).filter(Transaction.player_id == player.id).filter(
+        Transaction.user_id == user.id).filter(Transaction.sort == kind).filter(Transaction.price == value).filter(
+        Transaction.date == ndate).first()
 
 
 def days_wo_price(player_id):

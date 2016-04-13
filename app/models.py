@@ -78,6 +78,7 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), primary_key=True)
+    username = db.Column(db.String(64))
     players = db.relationship('Player', backref=db.backref('user', lazy='joined'),
                               lazy='dynamic', cascade='all, delete-orphan')
     userdata = db.relationship('Userdata', foreign_keys=[Userdata.id], lazy='dynamic', order_by='Userdata.date')

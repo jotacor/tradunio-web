@@ -176,7 +176,7 @@ class Comunio:
     def get_users_info(self):
         """
         Get comunity info using a ID
-        @return: [[user_name, user_id, user_points, team_value, money, max_bid],]
+        @return: [[name, username, user_id, user_points, team_value, money, max_bid],]
         """
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/standings.phtml', "User-Agent": user_agent}
@@ -194,15 +194,16 @@ class Comunio:
         info = list()
         for row in soup.find('table', cellpadding=2).find_all('tr')[1:]:
             money, max_bid = [0, 0]
-            user_name = row.a.text
+            name = row.a.text
             user_id = row.find('a')['href'].split('pid=')[1]
+            username = re.findall('\((.+)\)', BeautifulSoup(self.session.get('http://'+self.domain+'/playerInfo.phtml?pid='+user_id, headers=headers).content, "html.parser").h1.text)[0]
             user_points = int(row.find_all('td')[3].text)
             team_value = int(row.find_all('td')[4].text.replace('.', ''))
             for user in money_bids['lista']['players']:
                 if user['id'] == user_id:
                     money = int(user['dinero'].replace('.', ''))
                     max_bid = int(user['puja'].replace('.', ''))
-            info.append([user_name, int(user_id), user_points, team_value, money, max_bid])
+            info.append([name, username, int(user_id), user_points, team_value, money, max_bid])
         return info
 
     def get_player_info(self, player_id):
