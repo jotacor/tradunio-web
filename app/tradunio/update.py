@@ -163,7 +163,7 @@ def set_transactions(com):
 
                 db.session.commit()
 
-            except IndexError:
+            except AttributeError:
                 # Player selled before having in database
                 pass
 
