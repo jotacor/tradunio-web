@@ -489,7 +489,7 @@ class Comunio:
 
             if month + day == '0101' or (formatted_dates and int(month) > formatted_dates[-1].month):
                 # One year less
-                year = str(year - 1)
+                year -= 1
 
             p_date = datetime.strptime('%s-%s-%s' % (year, month, day), "%Y-%m-%d").date()
             formatted_dates.append(p_date)
