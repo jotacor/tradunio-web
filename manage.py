@@ -36,5 +36,18 @@ def test():
     unittest.TextTestRunner(verbosity=2).run(tests)
 
 
+@app.template_filter()
+def sum_points(points):
+    total_points = 0
+    for point in points:
+        total_points += point.points
+    return total_points
+
+
+@app.template_filter()
+def format_money(money):
+    return u"{:,.0f}\u20AC".format(money)
+
+
 if __name__ == '__main__':
     manager.run()

@@ -1,13 +1,51 @@
-{% extends "base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-
-{% block title %}Tradunio{% endblock %}
+{% extends "menu.html" %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1>Welcome to Tradunio</h1>
-    <p>With Tradunio you will be able to know everything about your players and your opponents.</p>
-    <p>We DON'T store passwords.</p>
+{{ super() }}
+
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-striped">
+            {% if function %}
+            <tr>
+                <th>Player</th>
+                <th>Position</th>
+                <th>Month</th>
+                <th>Week</th>
+                <th>Day</th>
+                <th>Last gamedays</th>
+                <th>Streak</th>
+                {% if function == 'sell' %} <th>Purchase price</th>
+                {% else %} <th>Min. price</th> {% endif %}
+                <th>Market price</th>
+                {% if function == 'buy' %} <th>Profit</th>
+                {% else %} <th>Owner</th> {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <th>Player</th>
+                <th>Club</th>
+                <th>Value</th>
+                <th>Points</th>
+                <th>Position</th>
+                <th>Last gamedays</th>
+                <th>Streak</th>
+            </tr>
+            {% endif %}
+
+            {% for player in user.players %}
+            <tr>
+                <td>{{ player.name }}</td>
+                <td>{{ player.club.name }}</td>
+                <td>{{ player.prices[-1].price }}</td>
+                <td>{{ player.points | sum_points }}</td>
+                <td>{{ player.position }}</td>
+                <td>Last gamedays</td>
+                <td>Streak</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
-{{ wtf.quick_form(form) }}
+
 {% endblock %}
