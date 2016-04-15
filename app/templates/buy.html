@@ -8,23 +8,29 @@
         <table class="table table-striped">
             <tr>
                 <th>Player</th>
-                <th>Club</th>
-                <th>Value</th>
-                <th>Points</th>
                 <th>Position</th>
+                <th>Month</th>
+                <th>Week</th>
+                <th>Day</th>
                 <th>Last gamedays</th>
                 <th>Streak</th>
+                <th>Market price</th>
+                <th>Min. price</th>
+                <th>Owner</th>
             </tr>
 
             {% for player in user.players %}
             <tr>
                 <td>{{ player.name }}</td>
-                <td>{{ player.club.name }}</td>
-                <td class="text-right">{{ player.prices[-1].price  | format_money }}</td>
-                <td class="text-right">{{ player.points | sum_points }}</td>
                 <td>{{ player.position }}</td>
+                <td>Month</td>
+                <td>Week</td>
+                <td>Day</td>
                 <td>Last gamedays</td>
                 <td>Streak</td>
+                <td>Market price</td>
+                <td>Min. price</td>
+                <td>Owner</td>
             </tr>
             {% endfor %}
         </table>

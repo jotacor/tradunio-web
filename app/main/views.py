@@ -36,8 +36,7 @@ def index():
     if not user:
         return redirect(url_for('.logout'))
 
-    return render_template('index.html', username=session.get('username'), user=user,
-                           players=[[1, 2, 3, 4, 5, 6, 7], [11, 12, 13, 14, 15, 16, 17]])
+    return render_template('index.html', username=session.get('username'), user=user)
 
 
 @main.route('/sell', methods=['GET'])
@@ -45,9 +44,11 @@ def sell():
     if not session.get('username', None):
         return redirect(url_for('.login'))
 
-    return render_template('index.html', username=session.get('username'),
-                           submenu='Players to Sell', function='sell',
-                           players=[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]])
+    user = User.query.filter_by(username=session.get('username')).first()
+    if not user:
+        return redirect(url_for('.logout'))
+
+    return render_template('sell.html', username=session.get('username'), user=user, submenu='Players to Sell')
 
 
 @main.route('/buy', methods=['GET'])
@@ -55,9 +56,11 @@ def buy():
     if not session.get('username', None):
         return redirect(url_for('.login'))
 
-    return render_template('index.html', username=session.get('username'),
-                           submenu='Players to Buy', function='buy',
-                           players=[[10, 9, 8, 7, 6, 5, 4, 3, 2, 1], [20, 19, 18, 17, 16, 15, 14, 13, 12, 11]])
+    user = User.query.filter_by(username=session.get('username')).first()
+    if not user:
+        return redirect(url_for('.logout'))
+
+    return render_template('buy.html', username=session.get('username'), user=user, submenu='Players to Buy')
 
 
 @main.route('/logout', methods=['GET'])
