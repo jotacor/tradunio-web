@@ -12,3 +12,15 @@ def sum_points(points):
     for point in points:
         total_points += point.points
     return total_points
+
+
+@utils.app_template_filter()
+def format_gamedays(gamedays):
+    result = ''
+    for points in gamedays:
+        if 0 <= points.points < 10:
+            result += '  ' + str(points.points)
+        else:
+            result += ' ' + str(points.points)
+
+    return result
