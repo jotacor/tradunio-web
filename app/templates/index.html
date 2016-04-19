@@ -23,8 +23,7 @@
                 <td class="text-right">{{ player.prices[-1].price  | format_money }}</td>
                 <td class="text-right">{{ player.points | sum_points }}</td>
                 <td>{{ player.position }}</td>
-                <td>{{ player.points[-5:] | format_gamedays }}
-                </td>
+                <td>{{ player.points[-5:] | format_gamedays }}</td>
                 <td>{{ player.points[-5:] | sum(attribute='points') }}</td>
             </tr>
             {% endfor %}

@@ -24,3 +24,8 @@ def format_gamedays(gamedays):
             result += ' ' + str(points.points)
 
     return result
+
+
+@utils.app_template_filter()
+def profit(price_ago, mkt_price):
+    return (mkt_price - price_ago) / float(price_ago) * 100

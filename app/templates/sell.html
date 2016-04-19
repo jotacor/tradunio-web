@@ -23,14 +23,14 @@
             <tr>
                 <td>{{ player.name }}</td>
                 <td>{{ player.position }}</td>
-                <td>Month</td>
-                <td>Week</td>
-                <td>Day</td>
-                <td>Last gamedays</td>
-                <td>Streak</td>
-                <td>Purchase price</td>
-                <td>Market price</td>
-                <td>Profit</td>
+                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) }}</td>
+                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) }}</td>
+                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) }}</td>
+                <td>{{ player.points[-5:] | format_gamedays }}</td>
+                <td>{{ player.points[-5:] | sum(attribute='points') }}</td>
+                <td>{{ prc_price[loop.index] }}</td>
+                <td>{{ player.prices[-1].price }}</td>
+                <td>prc_price[loop.index] | profit(player.prices[-1].price)</td>
             </tr>
             {% endfor %}
         </table>
