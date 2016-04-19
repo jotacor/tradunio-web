@@ -112,9 +112,12 @@ def set_player_data(com, player_id=None, playername=None):
 
         for gameday, points in points_all:
             p = Points.query.filter_by(id=player.id).filter_by(gameday=gameday).first()
-            if not p or p.points == 0:
+            if not p:
                 pt = Points(id=player.id, gameday=gameday, points=points)
                 db.session.add(pt)
+            elif p.points == 0:
+                p.points = points
+                db.session.add(p)
 
         db.session.commit()
 
