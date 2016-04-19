@@ -11,6 +11,7 @@ from datetime import date, timedelta
 from ..models import User, Userdata, Transaction, Player, Club, Price, Points
 import re
 
+
 def update(login, passwd):
     """
     Update the database with new data.
@@ -33,6 +34,7 @@ def update(login, passwd):
 def set_users_data(com):
     """
     Gets the last data of the users from Comunio and saves it to database.
+    :type com: User
     :return: {{user_id: username, user_points, teamvalue, money, maxbid}}
     """
     users_data = list()
@@ -58,8 +60,8 @@ def set_users_data(com):
 def set_user_players(com, user=None):
     """
     Set the players of the user.
-    :param user_id: Id of the user.
-    :param username: Name of the user.
+    :param com: Object to ask Comunio
+    :param user: Object User
     :return: [[player_id, playername, club_id, club_name, value, player_points, position]]
     """
     user_players = com.get_user_players(user.id)
@@ -86,12 +88,13 @@ def set_user_players(com, user=None):
 def set_player_data(com, player_id=None, playername=None):
     """
     Sets prices and points for all the players of the user
+    :param com: Object to ask Comunio
     :param player_id: Id of the football player
     :param playername: Football player name
     :return: Players of the user id
     """
     days_left = days_wo_price(player_id)
-    prices, points = list(), list()
+    prices, points_all = list(), list()
     if days_left:
         dates, prices, points_all = com.get_player_data(playername=playername)
         if days_left >= 365:
@@ -108,7 +111,8 @@ def set_player_data(com, player_id=None, playername=None):
                 db.session.add(pr)
 
         for gameday, points in points_all:
-            if not Points.query.filter_by(id=player.id).filter_by(gameday=gameday).first():
+            p = Points.query.filter_by(id=player.id).filter_by(gameday=gameday).first()
+            if not p or p.points == 0:
                 pt = Points(id=player.id, gameday=gameday, points=points)
                 db.session.add(pt)
 
