@@ -3,6 +3,8 @@ from . import utils
 
 @utils.app_template_filter()
 def format_money(money):
+    if not isinstance(money, (int, long)):
+        money = 0
     return u"{:,.0f}\u20AC".format(money)
 
 
@@ -18,14 +20,28 @@ def sum_points(points):
 def format_gamedays(gamedays):
     result = ''
     for points in gamedays:
-        if 0 <= points.points < 10:
-            result += '  ' + str(points.points)
-        else:
-            result += ' ' + str(points.points)
-
+        color = {
+            points.points < 0: 'danger',
+            points.points == 0: 'default',
+            0 < points.points <= 2: 'warning',
+            2 < points.points < 10: 'success',
+            10 <= points.points < 9999: 'primary'
+        }
+        result += '<span class="label label-%s last_points">%s</span>' % (color[True], points.points)
     return result
 
 
 @utils.app_template_filter()
 def profit(price_ago, mkt_price):
-    return (mkt_price - price_ago) / float(price_ago) * 100
+    if not price_ago or not mkt_price:
+        prof = 0
+    else:
+        prof = (mkt_price - price_ago) / float(price_ago) * 100
+
+    color = {
+        prof <= -10: 'danger',
+        -10 < prof <= 0: 'warning',
+        0 < prof < 10: 'success',
+        10 <= prof < 9999: 'primary'
+    }
+    return '<span class="label label-%s last_points">%4d%%</span>' % (color[True], prof)

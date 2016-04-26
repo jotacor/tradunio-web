@@ -32,7 +32,7 @@ class Club(db.Model):
 class Points(db.Model):
     __tablename__ = 'points'
     id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
-    gameday = db.Column(db.Integer, primary_key=True)
+    gameday = db.Column(db.Integer, primary_key=True, autoincrement=False)
     points = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):

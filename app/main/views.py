@@ -58,7 +58,7 @@ def sell():
             min_date = Transaction.query.order_by(Transaction.date.desc()).first().date
             diff_days = (min_date - date.today()).days
             prc_price.append(player.prices[-diff_days].price)
-
+    players = user.players
     return render_template('sell.html', username=session.get('username'), user=user, prc_price=prc_price, submenu='Players to Sell')
 
 

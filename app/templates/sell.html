@@ -5,34 +5,37 @@
 
 <div class="row">
     <div class="col-md-12">
-        <table class="table table-striped">
+        <table id="players" class="table table-striped">
+            <thead>
             <tr>
                 <th>Player</th>
                 <th>Position</th>
-                <th>Month</th>
-                <th>Week</th>
-                <th>Day</th>
-                <th>Last gamedays</th>
-                <th>Streak</th>
-                <th>Purchase price</th>
-                <th>Market price</th>
-                <th>Profit</th>
+                <th class="text-right">Month</th>
+                <th class="text-right">Week</th>
+                <th class="text-right">Day</th>
+                <th class="text-right">Last gamedays</th>
+                <th class="text-right">Streak</th>
+                <th class="text-right">Purchase price</th>
+                <th class="text-right">Market price</th>
+                <th class="text-right">Profit</th>
             </tr>
-
+            </thead>
+            <tbody>
             {% for player in user.players %}
             <tr>
                 <td>{{ player.name }}</td>
                 <td>{{ player.position }}</td>
-                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) }}</td>
-                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) }}</td>
-                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) }}</td>
-                <td>{{ player.points[-5:] | format_gamedays }}</td>
-                <td>{{ player.points[-5:] | sum(attribute='points') }}</td>
-                <td>{{ prc_price[loop.index] }}</td>
-                <td>{{ player.prices[-1].price }}</td>
-                <td>prc_price[loop.index] | profit(player.prices[-1].price)</td>
+                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) | safe }}</td>
+                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) | safe }}</td>
+                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) | safe }}</td>
+                <td class="text-right">{{ player.points[-5:] | format_gamedays | safe }}</td>
+                <td class="text-right">{{ player.points[-5:] | sum(attribute='points') | safe }}</td>
+                <td class="text-right">{{ prc_price[loop.index] | format_money }}</td>
+                <td class="text-right">{{ player.prices[-1].price | format_money }}</td>
+                <td class="text-right">{{ prc_price[loop.index] | profit(player.prices[-1].price) | safe }}</td>
             </tr>
             {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>

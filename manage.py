@@ -25,6 +25,7 @@ def update(login, passwd):
     if login is None or passwd is None:
         print ("Give me login and password of Comunio to update the database.")
         exit(1)
+
     tradunio_update(login, passwd)
 
 
