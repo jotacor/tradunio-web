@@ -58,7 +58,7 @@ class Transaction(db.Model):
     price = db.Column(db.Integer)
 
     def __repr__(self):
-        return 'Transaction: %r %r - %r => %r (%r)' % (self.date, self.sort, self.player_id, self.user_id, self.price)
+        return u'Transaction: %r %r - %r => %r (%r\u20AC)' % (self.date, self.sort, self.player_id, self.user_id, self.price)
 
 
 class Userdata(db.Model):
