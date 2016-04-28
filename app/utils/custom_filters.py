@@ -27,7 +27,7 @@ def format_gamedays(gamedays):
             2 < points.points < 10: 'success',
             10 <= points.points < 9999: 'primary'
         }
-        result += '<span class="label label-%s last_points">%s</span>' % (color[True], points.points)
+        result += '<span class="label-%s last-points">%s</span>' % (color[True], points.points)
     return result
 
 
@@ -44,4 +44,4 @@ def profit(price_ago, mkt_price):
         0 < prof < 10: 'success',
         10 <= prof < 9999: 'primary'
     }
-    return '<span class="label label-%s last_points">%4d%%</span>' % (color[True], prof)
+    return '<span class="label-%s profit">%4d%%</span>' % (color[True], prof)

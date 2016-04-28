@@ -1,7 +1,23 @@
-.last_points {
-  width: 20px !important;
-  height: 20px !important;
+.last-points {
+  width: 20px;
+  height: 20px;
   line-height: 20px;
   margin-left:4px;
   text-align: center;
+  border-radius: 2px;
+  color: #fff;
   }
+
+.profit {
+  width: 50px;
+  height: 20px;
+  line-height: 20px;
+  margin-left: 4px;
+  text-align: center;
+  border-radius: 2px;
+  color: #fff;
+  }
+
+span {
+    display: inline-block;
+}

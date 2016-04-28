@@ -25,9 +25,9 @@
             <tr>
                 <td>{{ player.name }}</td>
                 <td>{{ player.position }}</td>
-                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) }}%</td>
-                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) }}%</td>
-                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) }}%</td>
+                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) | safe }}</td>
+                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) | safe }}</td>
+                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) | safe }}</td>
                 <td class="text-right">{{ player.points[-5:] | format_gamedays | safe }}</td>
                 <td class="text-right">{{ player.points[-5:] | sum(attribute='points') | safe }}</td>
                 <td class="text-right">{{ player.prices[-1].price | format_money }}</td>
