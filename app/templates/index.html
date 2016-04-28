@@ -9,10 +9,10 @@
             <thead>
             <tr>
                 <th>Player</th>
+                <th>Position</th>
                 <th>Club</th>
                 <th class="text-right">Value</th>
                 <th class="text-right">Points</th>
-                <th>Position</th>
                 <th class="text-right">Last gamedays</th>
                 <th class="text-right">Streak</th>
             </tr>
@@ -21,10 +21,10 @@
             {% for player in user.players %}
             <tr>
                 <td>{{ player.name }}</td>
+                <td>{{ player.position }}</td>
                 <td>{{ player.club.name }}</td>
                 <td class="text-right">{{ player.prices[-1].price  | format_money }}</td>
                 <td class="text-right">{{ player.points | sum_points }}</td>
-                <td>{{ player.position }}</td>
                 <td class="text-right">{{ player.points[-5:] | format_gamedays | safe }}</td>
                 <td class="text-right">{{ player.points[-5:] | sum(attribute='points') }}</td>
             </tr>
