@@ -18,7 +18,7 @@
 <div class="page-header">
     <h1>Welcome {{ username }} <small>Last update: {{ user.userdata[-1].date }}</small></h1>
     <div class="row">
-        <div class="col-md-2">Players</br>{{ user.players.count() }}</div>
+        <div class="col-md-2">Players</br>{{ players | length }}</div>
         <div class="col-md-3">Teamvalue</br>{{ user.userdata[-1].teamvalue | format_money }}</div>
         <div class="col-md-2">Money</br>{{ user.userdata[-1].money | format_money }}</div>
         <div class="col-md-2">Max.bid</br>{{ user.userdata[-1].maxbid | format_money }}</div>

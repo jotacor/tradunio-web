@@ -21,18 +21,18 @@
             </tr>
             </thead>
             <tbody>
-            {% for player in user.players %}
+	        {% for player in players %}
             <tr>
-                <td>{{ player.name }}</td>
-                <td>{{ player.position }}</td>
-                <td class="text-right">{{ player.prices[-30].price | profit(player.prices[-1].price) | safe }}</td>
-                <td class="text-right">{{ player.prices[-8].price | profit(player.prices[-1].price) | safe }}</td>
-                <td class="text-right">{{ player.prices[-2].price | profit(player.prices[-1].price) | safe }}</td>
-                <td class="text-right">{{ player.points[-5:] | format_gamedays | safe }}</td>
-                <td class="text-right">{{ player.points[-5:] | sum(attribute='points') | safe }}</td>
-                <td class="text-right">{{ prc_price[loop.index] | format_money }}</td>
-                <td class="text-right">{{ player.prices[-1].price | format_money }}</td>
-                <td class="text-right">{{ prc_price[loop.index] | profit(player.prices[-1].price) | safe }}</td>
+                <td>{{ player.get('name') }}</td>
+                <td>{{ player.get('position') }}</td>
+                <td class="text-right">{{ player.get('month') | profit(player.get('today')) | safe }}</td>
+                <td class="text-right">{{ player.get('week') | profit(player.get('today')) | safe }}</td>
+                <td class="text-right">{{ player.get('day') | profit(player.get('today')) | safe }}</td>
+                <td class="text-right">{{ player.get('last_points') | format_gamedays | safe }}</td>
+                <td class="text-right">{{ player.get('last_points') | sum(attribute='points') | safe }}</td>
+                <td class="text-right">{{ player.get('prc_price') | format_money }}</td>
+                <td class="text-right">{{ player.get('today') | format_money }}</td>
+                <td class="text-right">{{ player.get('prc_price') | profit(player.get('today')) | safe }}</td>
             </tr>
             {% endfor %}
             </tbody>

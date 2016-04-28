@@ -49,17 +49,20 @@ def sell():
     if not user:
         return redirect(url_for('.logout'))
 
-    prc_price = list()
+    players = list()
     for player in user.players:
         t = Transaction.query.filter_by(player_id=player.id).filter_by(user_id=user.id).filter_by(sort='Buy').order_by(Transaction.date.desc()).first()
         if t:
-            prc_price.append(t.price)
+            prc_price = t.price
         else:
             min_date = Transaction.query.order_by(Transaction.date.desc()).first().date
             diff_days = (min_date - date.today()).days
-            prc_price.append(player.prices[-diff_days].price)
-    players = user.players
-    return render_template('sell.html', username=session.get('username'), user=user, prc_price=prc_price, submenu='Players to Sell')
+            prc_price = player.prices[-diff_days].price
+
+        players.append({'name': player.name, 'position':player.position, 'month': player.prices[-30].price, 'week': player.prices[-8].price,
+                        'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
+
+    return render_template('sell.html', username=session.get('username'), players = players, user=user, submenu='Players to Sell')
 
 
 @main.route('/buy', methods=['GET'])
