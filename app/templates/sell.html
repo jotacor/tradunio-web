@@ -23,16 +23,16 @@
             <tbody>
 	        {% for player in players %}
             <tr>
-                <td>{{ player.get('name') }}</td>
-                <td>{{ player.get('position') }}</td>
-                <td class="text-right">{{ player.get('month') | profit(player.get('today')) | safe }}</td>
-                <td class="text-right">{{ player.get('week') | profit(player.get('today')) | safe }}</td>
-                <td class="text-right">{{ player.get('day') | profit(player.get('today')) | safe }}</td>
-                <td class="text-right">{{ player.get('last_points') | format_gamedays | safe }}</td>
-                <td class="text-right">{{ player.get('last_points') | sum(attribute='points') | safe }}</td>
-                <td class="text-right">{{ player.get('prc_price') | format_money }}</td>
-                <td class="text-right">{{ player.get('today') | format_money }}</td>
-                <td class="text-right">{{ player.get('prc_price') | profit(player.get('today')) | safe }}</td>
+                <td>{{ player['name'] }}</td>
+                <td>{{ player['position'] }}</td>
+                <td class="text-right">{{ player['month'] | profit(player['today']) | safe }}</td>
+                <td class="text-right">{{ player['week'] | profit(player['today']) | safe }}</td>
+                <td class="text-right">{{ player['day'] | profit(player['today']) | safe }}</td>
+                <td class="text-right">{{ player['last_points'] | format_gamedays | safe }}</td>
+                <td class="text-right">{{ player['last_points'] | sum(attribute='points') | safe }}</td>
+                <td class="text-right">{{ player['prc_price'] | format_money }}</td>
+                <td class="text-right">{{ player['today'] | format_money }}</td>
+                <td class="text-right">{{ player['prc_price'] | profit(player['today']) | safe }}</td>
             </tr>
             {% endfor %}
             </tbody>

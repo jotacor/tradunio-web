@@ -18,15 +18,15 @@
             </tr>
             </thead>
             <tbody>
-            {% for player in user.players %}
+            {% for player in players %}
             <tr>
-                <td>{{ player.name }}</td>
-                <td>{{ player.position }}</td>
-                <td>{{ player.club.name }}</td>
-                <td class="text-right">{{ player.prices[-1].price  | format_money }}</td>
-                <td class="text-right">{{ player.points | sum_points }}</td>
-                <td class="text-right">{{ player.points[-5:] | format_gamedays | safe }}</td>
-                <td class="text-right">{{ player.points[-5:] | sum(attribute='points') }}</td>
+                <td>{{ player.get('name') }}</td>
+                <td>{{ player.get('position') }}</td>
+                <td>{{ player.get('clubname') }}</td>
+                <td class="text-right">{{ player.get('today')  | format_money }}</td>
+                <td class="text-right">{{ player.get('total_points') }}</td>
+                <td class="text-right">{{ player.get('last_points') | format_gamedays | safe }}</td>
+                <td class="text-right">{{ player.get('last_points') | sum(attribute='points') }}</td>
             </tr>
             {% endfor %}
             </tbody>

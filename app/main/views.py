@@ -37,7 +37,16 @@ def index():
     if not user:
         return redirect(url_for('.logout'))
 
-    return render_template('index.html', username=session.get('username'), user=user)
+    players = list()
+    for player in user.players:
+        total_points = sum(point.points for point in player.points)
+
+        players.append({'name': player.name, 'position': player.position, 'clubname': player.club.name,
+                        'today': player.prices[-1].price, 'last_points': player.points[-5:], 'total_points': total_points})
+
+    user = user_to_dict(user)
+
+    return render_template('index.html', username=session.get('username'), user=user, players=players)
 
 
 @main.route('/sell', methods=['GET'])
@@ -62,6 +71,7 @@ def sell():
         players.append({'name': player.name, 'position':player.position, 'month': player.prices[-30].price, 'week': player.prices[-8].price,
                         'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
 
+    user = user_to_dict(user)
     return render_template('sell.html', username=session.get('username'), players = players, user=user, submenu='Players to Sell')
 
 
@@ -74,7 +84,13 @@ def buy():
     if not user:
         return redirect(url_for('.logout'))
 
-    return render_template('buy.html', username=session.get('username'), user=user, submenu='Players to Buy')
+    players = list()
+    for player in user.players:
+        players.append({'name': player.name, 'position': player.position, 'clubname': player.club.name,
+                        'today': player.prices[-1].price, 'last_points': player.points[-5:]})
+    user = user_to_dict(user)
+
+    return render_template('buy.html', username=session.get('username'), user=user, players=players, submenu='Players to Buy')
 
 
 @main.route('/logout', methods=['GET'])
@@ -88,6 +104,10 @@ def update():
     if not session.get('username', None):
         return redirect(url_for('.login'))
 
-    tradunio_update(session.get('username'), session.get('password'))
+    # tradunio_update(session.get('username'), session.get('password'))
 
     return render_template('index.html', username=session.get('username'))
+
+def user_to_dict(user):
+    ud = user.userdata[-1]
+    return dict(date=ud.date, teamvalue=ud.teamvalue, money=ud.money, maxbid=ud.maxbid, totalpoints=ud.points)
