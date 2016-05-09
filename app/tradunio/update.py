@@ -39,6 +39,11 @@ def set_users_data(com):
     """
     users_data = list()
     users_info = com.get_users_info()
+
+    u = User.query.filter_by(id=0).first()
+    if not u:
+        u = User(id=0, name='Computer', username='Computer')
+
     for user in users_info:
         [name, username, user_id, user_points, teamvalue, money, maxbid] = user
         u = User.query.filter_by(id=user_id).first()
@@ -66,6 +71,11 @@ def set_user_players(com, user=None):
     """
     user_players = com.get_user_players(user.id)
     players = list()
+
+    for player in user.players:
+        player.owner = 0
+        db.session.commit()
+
     for player in user_players:
         player_id, playername, club_id, club_name, value, player_points, position = player
 
