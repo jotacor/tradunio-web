@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 Created on April 11, 2016
 @author: jotacor
@@ -18,6 +19,11 @@ def update(login, passwd):
     """
     db.create_all()
     com = Comunio(login, passwd, 'BBVA')
+
+    if not com.logged:
+        print "We can't log in, please try again later."
+        exit(1)
+
     users = set_users_data(com)
 
     for user in users:
