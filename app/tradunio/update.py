@@ -9,7 +9,7 @@ Created on April 11, 2016
 from app import db
 from ComunioPy import Comunio
 from datetime import date, timedelta
-from ..models import User, Userdata, Transaction, Player, Club, Price, Points
+from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market
 import re
 
 
@@ -35,6 +35,7 @@ def update(login, passwd):
             set_player_data(com, player_id=player.id, playername=player.name)
 
     set_transactions(com)
+    set_market(com)
 
 
 def set_users_data(com):
@@ -49,6 +50,8 @@ def set_users_data(com):
     u = User.query.filter_by(id=0).first()
     if not u:
         u = User(id=0, name='Computer', username='Computer')
+        db.session.add(u)
+        db.session.commit()
 
     for user in users_info:
         [name, username, user_id, user_points, teamvalue, money, maxbid] = user
@@ -225,12 +228,37 @@ def set_new_player(player_id, playername, position, club_id):
     :param player_id:
     :param playername:
     :param position:
-    :param team_id:
+    :param club_id:
     """
-    c = Club.query.filter_by(id=club_id)
+    c = Club.query.filter_by(id=club_id).first()
     p = Player(id=player_id, name=playername, position=position, club=c)
     db.session.add(p)
     db.session.commit()
     return p
 
 
+def set_market(com):
+    """
+    Get the players in the market and save them to database.
+    :param com:
+    """
+    players = com.players_onsale()
+
+    for player in players:
+        player_id, playername, club_id, clubname, min_price, market_price, points, dat, owner, position = player
+
+        c = Club.query.filter_by(id=club_id).first()
+        if not c:
+            c = Club(id=club_id, name=clubname)
+
+        p = Player.query.filter_by(id=player_id).first()
+        if not p:
+            set_player_data(com, player_id=player_id, playername=playername)
+
+        u = User.query.filter_by(name=owner).first()
+        m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=dat).first()
+        if not m:
+            m = Market(owner_id=u.id, player_id=player_id, date=dat, mkt_price=market_price, min_price=min_price)
+            db.session.add(m)
+
+        db.session.commit()

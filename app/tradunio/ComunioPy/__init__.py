@@ -370,7 +370,7 @@ class Comunio:
                 continue
         return None
 
-    def players_onsale(self, community_id, only_computer=False):
+    def players_onsale(self):
         """
         Returns the football players currently on sale
         @return: [[name, team, min_price, market_price, points, date, owner, position]]
@@ -379,7 +379,7 @@ class Comunio:
         """
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain",
                    'Referer': 'http://' + self.domain + '/team_news.phtml', "User-Agent": user_agent}
-        req = self.session.get('http://' + self.domain + '/teamInfo.phtml?tid=' + str(community_id),
+        req = self.session.get('http://' + self.domain + '/teamInfo.phtml?tid=' + str(self.community_id),
                                headers=headers).content
         soup = BeautifulSoup(req, "html.parser")
 
@@ -399,12 +399,11 @@ class Comunio:
             # Controlamos el cambio de año, ya que comunio no lo dá
             if current_month <= 7 < int(columns[6].text[3:5]):
                 year_flag = 1
-            date = str(current_year - year_flag) + columns[6].text[3:5] + columns[6].text[:2]
+            date = datetime.strptime(str(current_year - year_flag) + columns[6].text[3:5] + columns[6].text[:2], '%Y%m%d').date()
             owner = columns[7].text.strip()
             position = self.translate_position(columns[8].text.strip())
             # Comprobamos si solamente queremos los de la computadora o no
-            if (only_computer and owner == 'Computer') or not only_computer:
-                on_sale.append([player_id, playername, team_id, team, min_price, market_price, points, date, owner, position])
+            on_sale.append([player_id, playername, team_id, team, min_price, market_price, points, date, owner, position])
 
         return on_sale
 

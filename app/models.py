@@ -89,3 +89,13 @@ class User(db.Model):
                % (self.name, self.players, self.userdata, self.transactions)
 
 
+class Market(db.Model):
+    __tablename__ = 'market'
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
+    date = db.Column(db.Date, primary_key=True)
+    mkt_price = db.Column(db.Integer)
+    min_price = db.Column(db.Integer)
+
+    def __repr__(self):
+        return u'Market: %r - %r => %r (%r\u20AC)' % (self.owner_id, self.player_id, self.date, self.mkt_price)
