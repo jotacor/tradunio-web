@@ -1,10 +1,11 @@
 from flask import render_template, session, redirect, url_for, current_app
 from .. import db
-from ..models import User, Transaction
+from ..models import User, Transaction, Market, Player
 from ..email import send_email
 from . import main
 from .forms import NameForm
-from ..tradunio.update import update as tradunio_update
+from ..tradunio.update import update_market
+from ..utils.functions import user_to_dict
 from datetime import date
 
 
@@ -45,7 +46,6 @@ def index():
                         'today': player.prices[-1].price, 'last_points': player.points[-5:], 'total_points': total_points})
 
     user = user_to_dict(user)
-
     return render_template('index.html', username=session.get('username'), user=user, players=players)
 
 
@@ -72,7 +72,7 @@ def sell():
                         'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
 
     user = user_to_dict(user)
-    return render_template('sell.html', username=session.get('username'), players = players, user=user, submenu='Players to Sell')
+    return render_template('sell.html', username=session.get('username'), players=players, user=user, submenu='Players to Sell')
 
 
 @main.route('/buy', methods=['GET'])
@@ -84,12 +84,17 @@ def buy():
     if not user:
         return redirect(url_for('.logout'))
 
-    players = list()
-    for player in user.players:
-        players.append({'name': player.name, 'position': player.position, 'clubname': player.club.name,
-                        'today': player.prices[-1].price, 'last_points': player.points[-5:]})
-    user = user_to_dict(user)
+    on_sale = Market.query.filter_by(date=date.today()).all()
 
+    players = list()
+    for player in on_sale:
+        p = Player.query.filter_by(id=player.player_id).first()
+        owner = User.query.filter_by(id=player.owner_id).first().name
+        players.append({'name': p.name, 'position': p.position, 'clubname': p.club.name, 'today': player.mkt_price,
+                        'min_price': player.min_price, 'last_points': p.points[-5:], 'owner': owner,
+                        'month': p.prices[-30].price, 'week': p.prices[-8].price, 'day': p.prices[-2].price
+                         })
+    user = user_to_dict(user)
     return render_template('buy.html', username=session.get('username'), user=user, players=players, submenu='Players to Buy')
 
 
@@ -99,15 +104,16 @@ def logout():
     return redirect(url_for('.login'))
 
 
-@main.route('/update', methods=['GET'])
-def update():
+@main.route('/update_mkt', methods=['GET'])
+def update_mkt():
     if not session.get('username', None):
         return redirect(url_for('.login'))
 
-    # tradunio_update(session.get('username'), session.get('password'))
+    update_market(session.get('username'), session.get('password'))
+    return redirect(url_for('.buy'))
 
-    return render_template('index.html', username=session.get('username'))
 
-def user_to_dict(user):
-    ud = user.userdata[-1]
-    return dict(date=ud.date, teamvalue=ud.teamvalue, money=ud.money, maxbid=ud.maxbid, totalpoints=ud.points)
+# def user_to_dict(user):
+#     ud = user.userdata[-1]
+#     return dict(date=ud.date, teamvalue=ud.teamvalue, money=ud.money, maxbid=ud.maxbid,
+#                 totalpoints=ud.points, num_players=user.players.count())

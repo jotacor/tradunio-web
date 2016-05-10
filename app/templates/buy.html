@@ -31,8 +31,8 @@
                 <td class="text-right">{{ player['last_points'] | format_gamedays | safe }}</td>
                 <td class="text-right">{{ player['last_points'] | sum(attribute='points') | safe }}</td>
                 <td class="text-right">{{ player['today'] | format_money }}</td>
-                <td>Min. price</td>
-                <td>Owner</td>
+                <td class="text-right">{{ player['min_price'] | format_money }}</td>
+                <td>{{ player['owner'] }}</td>
             </tr>
             {% endfor %}
             </tbody>

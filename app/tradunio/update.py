@@ -13,7 +13,7 @@ from ..models import User, Userdata, Transaction, Player, Club, Price, Points, M
 import re
 
 
-def update(login, passwd):
+def update_all(login, passwd):
     """
     Update the database with new data.
     """
@@ -35,6 +35,20 @@ def update(login, passwd):
             set_player_data(com, player_id=player.id, playername=player.name)
 
     set_transactions(com)
+    set_market(com)
+
+
+def update_market(login, passwd):
+    """
+    Update the database with new data in market.
+    """
+    db.create_all()
+    com = Comunio(login, passwd, 'BBVA')
+
+    if not com.logged:
+        print "We can't log in, please try again later."
+        exit(1)
+
     set_market(com)
 
 
