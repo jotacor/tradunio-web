@@ -256,9 +256,10 @@ def set_market(com):
             set_player_data(com, player_id=player_id, playername=playername)
 
         u = User.query.filter_by(name=owner).first()
-        m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=dat).first()
+        m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=date.today()).first()
         if not m:
-            m = Market(owner_id=u.id, player_id=player_id, date=dat, mkt_price=market_price, min_price=min_price)
+            m = Market(owner_id=u.id, player_id=player_id, date=date.today(),
+                       mkt_price=market_price, min_price=min_price)
             db.session.add(m)
 
         db.session.commit()
