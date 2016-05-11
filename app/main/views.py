@@ -90,10 +90,16 @@ def buy():
     for player in on_sale:
         p = Player.query.filter_by(id=player.player_id).first()
         owner = User.query.filter_by(id=player.owner_id).first().name
+        if p.prices.count() >= 30:
+            month_price = p.prices[-30].price
+        else:
+            month_price = p.prices[0].price
+
         players.append({'name': p.name, 'position': p.position, 'clubname': p.club.name, 'today': player.mkt_price,
                         'min_price': player.min_price, 'last_points': p.points[-5:], 'owner': owner,
-                        'month': p.prices[-30].price, 'week': p.prices[-8].price, 'day': p.prices[-2].price
+                        'month': month_price, 'week': p.prices[-8].price, 'day': p.prices[-2].price
                          })
+
     user = user_to_dict(user)
     return render_template('buy.html', username=session.get('username'), user=user, players=players, submenu='Players to Buy')
 
