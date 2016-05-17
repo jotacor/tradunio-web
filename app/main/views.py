@@ -68,7 +68,7 @@ def sell():
             diff_days = (min_date - date.today()).days
             prc_price = player.prices[-diff_days].price
 
-        month_price, week_price = get_week_month_prices(p.prices)
+        month_price, week_price = get_week_month_prices(player.prices)
 
         players.append({'name': player.name, 'position':player.position, 'month': month_price, 'week': week_price,
                         'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
