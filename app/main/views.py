@@ -5,7 +5,7 @@ from ..email import send_email
 from . import main
 from .forms import NameForm
 from ..tradunio.update import update_market
-from ..utils.functions import user_to_dict
+from ..utils.functions import user_to_dict, get_week_month_prices
 from datetime import date
 
 
@@ -68,7 +68,9 @@ def sell():
             diff_days = (min_date - date.today()).days
             prc_price = player.prices[-diff_days].price
 
-        players.append({'name': player.name, 'position':player.position, 'month': player.prices[-30].price, 'week': player.prices[-8].price,
+        month_price, week_price = get_week_month_prices(p.prices)
+
+        players.append({'name': player.name, 'position':player.position, 'month': month_price, 'week': week_price,
                         'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
 
     user = user_to_dict(user)
@@ -90,14 +92,12 @@ def buy():
     for player in on_sale:
         p = Player.query.filter_by(id=player.player_id).first()
         owner = User.query.filter_by(id=player.owner_id).first().name
-        if p.prices.count() >= 30:
-            month_price = p.prices[-30].price
-        else:
-            month_price = p.prices[0].price
+
+        month_price, week_price = get_week_month_prices(p.prices)
 
         players.append({'name': p.name, 'position': p.position, 'clubname': p.club.name, 'today': player.mkt_price,
                         'min_price': player.min_price, 'last_points': p.points[-5:], 'owner': owner,
-                        'month': month_price, 'week': p.prices[-8].price, 'day': p.prices[-2].price
+                        'month': month_price, 'week': week_price, 'day': p.prices[-2].price
                          })
 
     user = user_to_dict(user)
