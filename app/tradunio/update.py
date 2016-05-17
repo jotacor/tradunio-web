@@ -179,7 +179,11 @@ def set_transactions(com):
             value = int(value.replace('.', ''))
             playername = playername.strip()
             try:
-                player = db.session.query(Player).filter(Player.name.like('%'+playername+'%')).first()
+                if db.session.query(Player).filter(Player.name.like(playername)).count():
+                    player = db.session.query(Player).filter(Player.name.like(playername)).first()
+                else:
+                    player = db.session.query(Player).filter(Player.name.like('%' + playername + '%')).first()
+
                 if 'Computer' in fr:
                     kind = 'Buy'
                     user = db.session.query(User).filter(User.name.like('%' + to + '%')).first()
