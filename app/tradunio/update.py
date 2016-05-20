@@ -7,7 +7,7 @@ Created on April 11, 2016
 """
 
 from app import db
-from ComunioPy import Comunio
+from comunio import Comunio
 from datetime import date, timedelta
 from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market
 import re
