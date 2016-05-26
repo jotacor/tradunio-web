@@ -4,7 +4,6 @@ from . import db
 class Player(db.Model):
     __tablename__ = 'players'
     id = db.Column(db.Integer, primary_key=True)
-    owner = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     name = db.Column(db.String(64))
     position = db.Column(db.String(64))
@@ -15,6 +14,15 @@ class Player(db.Model):
         return 'Name: %r, Position: %r, Club: %r, Points: %r, Price: %r' \
                % (self.name, self.position, self.club.name, sum(p.points for p in self.points),
                   self.prices[-1].price)
+
+
+class Owner(db.Model):
+    __tablename__ = 'owners'
+    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+
+    def __repr__(self):
+        return 'Owner: %r, Player: %r' % (self.owner_id, self.player_id)
 
 
 class Club(db.Model):
@@ -79,14 +87,30 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), primary_key=True)
     username = db.Column(db.String(64))
-    players = db.relationship('Player', backref=db.backref('user', lazy='joined'),
-                              lazy='dynamic', cascade='all, delete-orphan')
-    userdata = db.relationship('Userdata', foreign_keys=[Userdata.id], lazy='dynamic', order_by='Userdata.date')
-    transactions = db.relationship('Transaction', foreign_keys=[Transaction.user_id], lazy='dynamic', order_by='Transaction.date')
+    community_id = db.Column(db.Integer, db.ForeignKey('communities.id'))
+    owns = db.relationship('Owner', foreign_keys=[Owner.owner_id],
+                           lazy='dynamic')
+    userdata = db.relationship('Userdata', foreign_keys=[Userdata.id],
+                               lazy='dynamic', order_by='Userdata.date')
+    transactions = db.relationship('Transaction', foreign_keys=[Transaction.user_id],
+                                   lazy='dynamic', order_by='Transaction.date')
+
 
     def __repr__(self):
         return 'Name %r, Players %r, Userdata %r, Transactions %r' \
                % (self.name, self.players, self.userdata, self.transactions)
+
+
+class Community(db.Model):
+    __tablename__ = 'communities'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), primary_key=True)
+    users = db.relationship('User', foreign_keys=[User.community_id],
+                            backref=db.backref('community', lazy='joined'),
+                            lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return 'id: %r, name: %r, users: %s' % (self.id, self.name, ','.join(self.users))
 
 
 class Market(db.Model):

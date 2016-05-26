@@ -3,6 +3,7 @@
 
 from bs4 import BeautifulSoup as bs
 from datetime import date, timedelta, datetime
+import re
 from suds.client import Client
 
 
@@ -35,6 +36,32 @@ class Comunio:
 
         return clubs
 
+    def get_playersbyclubid(self, club_id=None):
+        players_comunio, players_list = list(), list()
+        if not club_id:
+            clubs = self.get_clubs()
+            for club in clubs:
+                club_id, clubname = club
+                players_comunio.append(self.client.service.getplayersbyclubid(club_id))
+        else:
+            players_comunio.append(self.client.service.getplayersbyclubid(club_id))
+
+        for club_players in players_comunio:
+            for player in club_players:
+                players_list.append([
+                    player.id[0],
+                    player.name[0].encode('utf-8').strip(),
+                    player.points[0],
+                    player.clubid[0],
+                    player.quote[0],
+                    player.status[0].encode('utf-8'),
+                    player.status_info[0].encode('utf-8') if player.status_info else None,
+                    player.position[0].encode('utf-8'),
+                    player.rankedgamesnumber[0]
+                ])
+
+        return players_list
+
     def get_market(self, community_id=None, user_id=None):
         if not community_id:
             community_id = self.client.service.getcommunityid(user_id)
@@ -50,7 +77,7 @@ class Comunio:
                 listed.quote[0],
                 listed.recommendedprice[0],
                 listed.status[0].encode('utf-8'),
-                listed.status_info,
+                listed.status_info[0].encode('utf-8') if listed.status_info else None,
                 listed.position[0].encode('utf-8'),
                 listed.placed[0],
                 listed.ownerid[0],
@@ -63,25 +90,41 @@ class Comunio:
             community_id = self.client.service.getcommunityid(user_id)
 
         news_comunio = self.client.service.getcomputernews(community_id, 30, 30)
-        news = list()
+        transactions = list()
+        pattern = re.compile(
+            ur'(?:(?:\\n)?([(\S+ )]+?)(?: cambia por )([0-9\.,]*?)(?: .*? de )(.+?) a (.+?)\.)', re.UNICODE)
         for published in news_comunio:
             if published.subject[0] == 'Fichajes':
-                message = bs(published.message[0].encode('utf-8'))
-                message.a
-                message.text
-                news.append([
-                    published.date[0],
-                    published.author[0],
-                    published.subject[0],
-                    published.message[0].encode('utf-8'),
+                message = bs(published.message[0].encode('utf-8'), "html.parser")
+                player_id = int(re.findall('\d+', message.a['href'])[0])
+                trans = re.findall(pattern, message.text)[0]
+                playername, value, fr, to = trans
+                transactions.append([
+                    datetime.strptime(published.date[0][0:10], '%Y-%m-%d').date(),
+                    player_id, playername, int(value.replace('.', '')), fr, to
                 ])
 
-        return news
+        return transactions
+
+    def get_gamedays(self):
+        gamedays_comunio = self.client.service.getgamedays()
+        gamedays_list = list()
+        for gamedays in gamedays_comunio:
+            gameday_id = int(gamedays[0][0].value[0])
+            number = int(gamedays[0][1].value[0])
+            gamedate = datetime.strptime(gamedays[0][3].value[0][0:10], '%Y-%m-%d').date()
+            shifted = bool(gamedays[0][4].value[0])
+            gamedays_list.append([number, gameday_id, gamedate, shifted])
+
+        return gamedays_list
+
 
 
 c = Comunio()
-#print c.get_player_price(3, '2016-05-01')
-#print c.get_clubs()
-#print c.get_market(user_id=15797714)
-print c.get_signings(user_id=15797714)
+# print c.get_player_price(3, '2016-05-01')
+# print c.get_clubs()
+# print c.get_market(user_id=15797714)
+# a=c.get_transactions(user_id=15797714)
+# print c.get_playersbyclubid(15)
+#print c.get_gamedays()
 pass
