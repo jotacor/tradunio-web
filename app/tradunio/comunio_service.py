@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup as bs
 from datetime import date, timedelta, datetime
 from suds.client import Client
 
-class Comunio():
+
+class Comunio:
     def __init__(self):
         self.client = Client(url='http://www.comunio.es/soapservice.php?wsdl')
         self.today = date.today()
@@ -57,7 +58,7 @@ class Comunio():
 
         return market
 
-    def get_signings(self, community_id=None, user_id=None):
+    def get_transactions(self, community_id=None, user_id=None):
         if not community_id:
             community_id = self.client.service.getcommunityid(user_id)
 

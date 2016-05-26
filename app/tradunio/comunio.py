@@ -36,7 +36,7 @@ class Comunio:
                      'login': self.domain + '/login.phtml'}
         self.logged = self.login()
         self.urls.update({'team': '%s/teamInfo.phtml?tid=%s' % (self.domain, self.community_id),
-                          'player': '%s/playerInfo.phtml?pid=%s' % (self.domain, self.user_id),
+                          'player': '%s/playerInfo.phtml?pid=%%s' % self.domain,
                           'trade': '%s/tradableInfo.phtml?tid=%%s' % self.domain,
                           })
 
@@ -84,7 +84,7 @@ class Comunio:
             money, max_bid = [0, 0]
             name = row.a.text
             user_id = row.find('a')['href'].split('pid=')[1]
-            req = self.session.get(self.urls['player'], headers=headers).content
+            req = self.session.get(self.urls['player'] % user_id, headers=headers).content
             html_h1 = BeautifulSoup(req, "html.parser").h1.text
             username = re.findall('\((.+)\)', html_h1)[0]
             user_points = int(row.find_all('td')[3].text)
@@ -104,7 +104,7 @@ class Comunio:
         @return: [username, points,[[player_id, name, club, value, points, position],]]
         """
         headers.update({'Referer': self.domain + '/standings.phtml'})
-        req = self.session.get(self.urls['player'], headers=headers).content
+        req = self.session.get(self.urls['player'] % user_id, headers=headers).content
         soup = BeautifulSoup(req, "html.parser")
 
         players_info = list()
