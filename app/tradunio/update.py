@@ -8,6 +8,7 @@ Created on April 11, 2016
 
 from app import db
 from comunio import Comunio
+from comunio_service import Comunio as ComService
 from datetime import date, timedelta
 from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market, Owner, Community
 import re
@@ -35,21 +36,33 @@ def update_all(login, passwd):
             set_player_data(com, player_id=player.id, playername=player.name)
 
     set_transactions(com)
-    set_market(com)
+    update_market()
 
 
-def update_market(login, passwd):
+def update_market(community_id=None, user_id=None):
     """
     Update the database with new data in market.
     """
     db.create_all()
-    com = Comunio(login, passwd, 'BBVA')
+    com_service = ComService()
+    market = com_service.get_market(community_id, user_id)
 
-    if not com.logged:
-        print "We can't log in, please try again later."
-        exit(1)
+    for player in market:
+        player_id, playername, points, club_id, market_price, min_price, status, injured, position, placed_date, owner_id = player
 
-    set_market(com)
+        c = Club.query.filter_by(id=club_id).first()
+        p = Player.query.filter_by(id=player_id).first()
+        if not p:
+            set_player_data(com, player_id=player_id, playername=playername)
+
+        u = User.query.filter_by(id=owner_id).first()
+        m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=date.today()).first()
+        if not m:
+            m = Market(owner_id=u.id, player_id=player_id, date=date.today(), mkt_price=market_price, min_price=min_price)
+            db.session.add(m)
+
+        db.session.commit()
+
 
 
 def set_users_data(com):
@@ -255,29 +268,29 @@ def set_new_player(player_id, playername, position, club_id):
     return p
 
 
-def set_market(com):
-    """
-    Get the players in the market and save them to database.
-    :param com:
-    """
-    players = com.players_onsale()
-
-    for player in players:
-        player_id, playername, club_id, clubname, min_price, market_price, points, dat, owner, position = player
-
-        c = Club.query.filter_by(id=club_id).first()
-        if not c:
-            c = Club(id=club_id, name=clubname)
-
-        p = Player.query.filter_by(id=player_id).first()
-        if not p:
-            set_player_data(com, player_id=player_id, playername=playername)
-
-        u = User.query.filter_by(name=owner).first()
-        m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=date.today()).first()
-        if not m:
-            m = Market(owner_id=u.id, player_id=player_id, date=date.today(),
-                       mkt_price=market_price, min_price=min_price)
-            db.session.add(m)
-
-        db.session.commit()
+# def set_market(com):
+#     """
+#     Get the players in the market and save them to database.
+#     :param com:
+#     """
+#     players = com.players_onsale()
+#
+#     for player in players:
+#         player_id, playername, club_id, clubname, min_price, market_price, points, dat, owner, position = player
+#
+#         c = Club.query.filter_by(id=club_id).first()
+#         if not c:
+#             c = Club(id=club_id, name=clubname)
+#
+#         p = Player.query.filter_by(id=player_id).first()
+#         if not p:
+#             set_player_data(com, player_id=player_id, playername=playername)
+#
+#         u = User.query.filter_by(name=owner).first()
+#         m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=date.today()).first()
+#         if not m:
+#             m = Market(owner_id=u.id, player_id=player_id, date=date.today(),
+#                        mkt_price=market_price, min_price=min_price)
+#             db.session.add(m)
+#
+#         db.session.commit()

@@ -63,6 +63,12 @@ class Comunio:
         return players_list
 
     def get_market(self, community_id=None, user_id=None):
+        """
+        Get the market from the community_id or the user_id
+        :param community_id:
+        :param user_id:
+        :return: [player_id, playername, points, club_id, market_price, min_price, status, injured, position, placed_date, owner_id]
+        """
         if not community_id:
             community_id = self.client.service.getcommunityid(user_id)
 
@@ -120,11 +126,11 @@ class Comunio:
 
 
 
-c = Comunio()
+# c = Comunio()
 # print c.get_player_price(3, '2016-05-01')
 # print c.get_clubs()
 # print c.get_market(user_id=15797714)
 # a=c.get_transactions(user_id=15797714)
 # print c.get_playersbyclubid(15)
-#print c.get_gamedays()
-pass
+# print c.get_gamedays()
+# pass
