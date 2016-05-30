@@ -39,11 +39,12 @@ def index():
         return redirect(url_for('.logout'))
 
     players = list()
-    for player in user.players:
-        total_points = sum(point.points for point in player.points)
+    for own in user.owns:
+        total_points = sum(point.points for point in own.player.points)
 
-        players.append({'name': player.name, 'position': player.position, 'clubname': player.club.name,
-                        'today': player.prices[-1].price, 'last_points': player.points[-5:], 'total_points': total_points})
+        players.append({'name': own.player.name, 'position': own.player.position, 'clubname': own.player.club.name,
+                        'today': own.player.prices[-1].price, 'last_points': own.player.points[-5:],
+                        'total_points': total_points})
 
     user = user_to_dict(user)
     return render_template('index.html', username=session.get('username'), user=user, players=players)
@@ -59,22 +60,26 @@ def sell():
         return redirect(url_for('.logout'))
 
     players = list()
-    for player in user.players:
-        t = Transaction.query.filter_by(player_id=player.id).filter_by(user_id=user.id).filter_by(sort='Buy').order_by(Transaction.date.desc()).first()
+    for own in user.owns:
+        t = Transaction.query.filter_by(player_id=own.player_id).filter_by(user_id=own.owner_id).filter_by(
+            sort='Buy').order_by(Transaction.date.desc()).first()
         if t:
             prc_price = t.price
         else:
             min_date = Transaction.query.order_by(Transaction.date.desc()).first().date
             diff_days = (min_date - date.today()).days
-            prc_price = player.prices[-diff_days].price
+            prc_price = own.player.prices[-diff_days].price
 
-        month_price, week_price = get_week_month_prices(player.prices)
+        month_price, week_price = get_week_month_prices(own.player.prices)
 
-        players.append({'name': player.name, 'position':player.position, 'month': month_price, 'week': week_price,
-                        'day': player.prices[-2].price, 'today':player.prices[-1].price, 'last_points':player.points[-5:], 'prc_price': prc_price })
+        players.append(
+            {'name': own.player.name, 'position': own.player.position, 'month': month_price, 'week': week_price,
+             'day': own.player.prices[-2].price, 'today': own.player.prices[-1].price,
+             'last_points': own.player.points[-5:], 'prc_price': prc_price})
 
     user = user_to_dict(user)
-    return render_template('sell.html', username=session.get('username'), players=players, user=user, submenu='Players to Sell')
+    return render_template('sell.html', username=session.get('username'), players=players, user=user,
+                           submenu='Players to Sell')
 
 
 @main.route('/buy', methods=['GET'])
@@ -98,10 +103,11 @@ def buy():
         players.append({'name': p.name, 'position': p.position, 'clubname': p.club.name, 'today': player.mkt_price,
                         'min_price': player.min_price, 'last_points': p.points[-5:], 'owner': owner,
                         'month': month_price, 'week': week_price, 'day': p.prices[-2].price
-                         })
+                        })
 
     user = user_to_dict(user)
-    return render_template('buy.html', username=session.get('username'), user=user, players=players, submenu='Players to Buy')
+    return render_template('buy.html', username=session.get('username'), user=user, players=players,
+                           submenu='Players to Buy')
 
 
 @main.route('/logout', methods=['GET'])
@@ -115,11 +121,9 @@ def update_mkt():
     if not session.get('username', None):
         return redirect(url_for('.login'))
 
-    update_market(session.get('username'), session.get('password'))
+    user = User.query.filter_by(username=session.get('username')).first()
+    if not user:
+        return redirect(url_for('.logout'))
+
+    update_market(user_id=user.id)
     return redirect(url_for('.buy'))
-
-
-# def user_to_dict(user):
-#     ud = user.userdata[-1]
-#     return dict(date=ud.date, teamvalue=ud.teamvalue, money=ud.money, maxbid=ud.maxbid,
-#                 totalpoints=ud.points, num_players=user.players.count())

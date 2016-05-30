@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import date, timedelta, datetime
 import re
 from suds.client import Client
+from ..models import Player
 
 
 class Comunio:

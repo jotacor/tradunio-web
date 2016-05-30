@@ -36,10 +36,10 @@ def update_all(login, passwd):
             set_player_data(com, player_id=player.id, playername=player.name)
 
     set_transactions(com)
-    update_market()
+    update_market(com=com, user_id=user.id)
 
 
-def update_market(community_id=None, user_id=None):
+def update_market(com=None, community_id=None, user_id=None):
     """
     Update the database with new data in market.
     """
@@ -74,9 +74,9 @@ def set_users_data(com):
     users_data = list()
     users_info = com.get_users_info()
 
-    u = User.query.filter_by(id=0).first()
+    u = User.query.filter_by(id=1).first()
     if not u:
-        u = User(id=0, name='Computer', username='Computer')
+        u = User(id=1, name='Computer', username='Computer')
         db.session.add(u)
         db.session.commit()
 
@@ -108,9 +108,9 @@ def set_user_players(com, user=None):
     user_players = com.get_user_players(user.id)
     players = list()
 
-    for player in user.players:
-        player.owner = 0
-        db.session.commit()
+    # for owner in user.owns:
+    #     owner.player.owner = 0
+    #     db.session.commit()
 
     for player in user_players:
         player_id, playername, club_id, club_name, value, player_points, position = player
@@ -123,9 +123,13 @@ def set_user_players(com, user=None):
         if not p:
             p = Player(id=player_id, name=playername, position=position, club=c)
 
-        user.players.append(p)
-        db.session.add(user)
-        db.session.commit()
+        o = Owner.query.filter_by(player_id=p.id, owner_id=user.id).first()
+        if not o:
+            o = Owner(player_id=p.id, owner_id=user.id)
+            user.owns.append(o)
+            db.session.add(user)
+            db.session.commit()
+
         players.append(p)
 
     return players
@@ -142,7 +146,7 @@ def set_player_data(com, player_id=None, playername=None):
     days_left = days_wo_price(player_id)
     prices, points_all = list(), list()
     if days_left:
-        dates, prices, points_all = com.get_player_data(playername=playername)
+        dates, prices, points_all = Comunio.get_player_data(playername)
         if days_left >= 365:
             days_left = len(dates)
 
@@ -266,31 +270,3 @@ def set_new_player(player_id, playername, position, club_id):
     db.session.add(p)
     db.session.commit()
     return p
-
-
-# def set_market(com):
-#     """
-#     Get the players in the market and save them to database.
-#     :param com:
-#     """
-#     players = com.players_onsale()
-#
-#     for player in players:
-#         player_id, playername, club_id, clubname, min_price, market_price, points, dat, owner, position = player
-#
-#         c = Club.query.filter_by(id=club_id).first()
-#         if not c:
-#             c = Club(id=club_id, name=clubname)
-#
-#         p = Player.query.filter_by(id=player_id).first()
-#         if not p:
-#             set_player_data(com, player_id=player_id, playername=playername)
-#
-#         u = User.query.filter_by(name=owner).first()
-#         m = Market.query.filter_by(owner_id=u.id).filter_by(player_id=player_id).filter_by(date=date.today()).first()
-#         if not m:
-#             m = Market(owner_id=u.id, player_id=player_id, date=date.today(),
-#                        mkt_price=market_price, min_price=min_price)
-#             db.session.add(m)
-#
-#         db.session.commit()

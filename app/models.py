@@ -20,6 +20,7 @@ class Owner(db.Model):
     __tablename__ = 'owners'
     player_id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    player = db.relationship('Player')
 
     def __repr__(self):
         return 'Owner: %r, Player: %r' % (self.owner_id, self.player_id)

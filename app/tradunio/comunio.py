@@ -121,7 +121,8 @@ class Comunio:
 
         return players_info
 
-    def get_player_data(self, playername=None):
+    @staticmethod
+    def get_player_data(playername=None):
         """
         Get historical prices from a player from Comuniazo
         :param playername: Name of the player.
@@ -135,13 +136,13 @@ class Comunio:
         count = 0
         dates, points, prices = list(), list(), list()
         while True and len(dates) < 2:
-            playername = self.check_exceptions(playername)
+            playername = Comunio.check_exceptions(playername)
             req = session.get(url_jugadores + playername.replace(" ", "-").replace(".", "").replace("'", "") + suffix,
                               headers=headers).content
             dates_re = re.search("(\"[0-9 ][0-9] de \w+\",?,?)+", req)
             try:
                 dates = dates_re.group(0).replace('"', '').split(",")
-                dates = self.translate_dates(dates)
+                dates = Comunio.translate_dates(dates)
             except AttributeError:
                 if count == 0:
                     suffix = '-2'
