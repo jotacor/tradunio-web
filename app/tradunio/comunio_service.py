@@ -5,13 +5,57 @@ from bs4 import BeautifulSoup as bs
 from datetime import date, timedelta, datetime
 import re
 from suds.client import Client
-from ..models import Player
 
 
 class Comunio:
     def __init__(self):
         self.client = Client(url='http://www.comunio.es/soapservice.php?wsdl')
         self.today = date.today()
+
+    def get_clubs(self):
+        """
+        Get all the clubs in comunio.
+        :return: [[club_id, clubname],]
+        """
+        clubs_comunio = self.client.service.getclubs()
+        clubs = list()
+        for club in clubs_comunio:
+            club_id = club.id[0]
+            club_name = club.name[0]
+            clubs.append([club_id, club_name])
+
+        return clubs
+
+    def get_playersbyclubid(self, club_id=None):
+        """
+        Get all the players from a club_id club.
+        :param club_id: Id of the players club.
+        :return: [[id, name, points, club_id, price, status, injured, position, games_played],]
+        """
+        players_comunio, players_list = list(), list()
+        if not club_id:
+            clubs = self.get_clubs()
+            for club in clubs:
+                club_id, clubname = club
+                players_comunio.append(self.client.service.getplayersbyclubid(club_id))
+        else:
+            players_comunio.append(self.client.service.getplayersbyclubid(club_id))
+
+        for club_players in players_comunio:
+            for player in club_players:
+                players_list.append([
+                    player.id[0],
+                    player.name[0].strip(),
+                    player.points[0],
+                    player.clubid[0],
+                    player.quote[0],
+                    player.status[0],
+                    player.status_info[0] if player.status_info else None,
+                    player.position[0],
+                    player.rankedgamesnumber[0]
+                ])
+
+        return players_list
 
     def get_player_price(self, playerid, from_date=None):
         if from_date:
@@ -26,42 +70,6 @@ class Comunio:
             prices = [self.today, price]
 
         return prices
-
-    def get_clubs(self):
-        clubs_comunio = self.client.service.getclubs()
-        clubs = list()
-        for club in clubs_comunio:
-            club_id = club.id[0]
-            club_name = club.name[0].encode('utf-8')
-            clubs.append([club_id, club_name])
-
-        return clubs
-
-    def get_playersbyclubid(self, club_id=None):
-        players_comunio, players_list = list(), list()
-        if not club_id:
-            clubs = self.get_clubs()
-            for club in clubs:
-                club_id, clubname = club
-                players_comunio.append(self.client.service.getplayersbyclubid(club_id))
-        else:
-            players_comunio.append(self.client.service.getplayersbyclubid(club_id))
-
-        for club_players in players_comunio:
-            for player in club_players:
-                players_list.append([
-                    player.id[0],
-                    player.name[0].encode('utf-8').strip(),
-                    player.points[0],
-                    player.clubid[0],
-                    player.quote[0],
-                    player.status[0].encode('utf-8'),
-                    player.status_info[0].encode('utf-8') if player.status_info else None,
-                    player.position[0].encode('utf-8'),
-                    player.rankedgamesnumber[0]
-                ])
-
-        return players_list
 
     def get_market(self, community_id=None, user_id=None):
         """
@@ -128,10 +136,10 @@ class Comunio:
 
 
 # c = Comunio()
-# print c.get_player_price(3, '2016-05-01')
+# a = c.get_player_price(3, '2016-05-01')
 # print c.get_clubs()
 # print c.get_market(user_id=15797714)
 # a=c.get_transactions(user_id=15797714)
-# print c.get_playersbyclubid(15)
+# a = c.get_playersbyclubid(15)
 # print c.get_gamedays()
 # pass

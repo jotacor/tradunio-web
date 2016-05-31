@@ -4,7 +4,7 @@ from app import create_app, db
 from app.models import User, Club, Player, Points, Price, Transaction, Userdata, Owner, Community, Market
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
-from app.tradunio.update import update_all
+from app.tradunio.update import update_all, init_database
 
 app = create_app(os.getenv('TRADUNIO_ENV') or 'default')
 manager = Manager(app)
@@ -17,6 +17,12 @@ def make_shell_context():
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
+
+
+@manager.command
+def init_db():
+    """ Initializes the databse with all clubs, players, prices and points. """
+    init_database()
 
 
 @manager.option('-l', '--login', dest='login', default=None)

@@ -8,6 +8,7 @@ Created on April 11, 2016
 
 from app import db
 from comunio import Comunio
+from comuniazo import Comuniazo
 from comunio_service import Comunio as ComService
 from datetime import date, timedelta
 from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market, Owner, Community
@@ -19,24 +20,74 @@ def update_all(login, passwd):
     Update the database with new data.
     """
     db.create_all()
-    com = Comunio(login, passwd, 'BBVA')
+    # com = Comunio(login, passwd, 'BBVA')
 
-    if not com.logged:
-        print "We can't log in, please try again later."
-        exit(1)
+    # if not com.logged:
+    #     print "We can't log in, please try again later."
+    #     exit(1)
 
-    users = set_users_data(com)
+    # users = set_users_data(com)
 
-    for user in users:
-        players = set_user_players(com, user)
+    # for user in users:
+    #     players = set_user_players(com, user)
+    #     for player in players:
+    #         if player.club_id == 25:
+    #             # Player is not in Primera División
+    #             continue
+    #         set_player_data(com, player_id=player.id, playername=player.name)
+    #
+    # set_transactions(com)
+    # update_market(com=com, user_id=user.id)
+
+
+def init_database():
+    db.create_all()
+
+    year_ago = date.today() - timedelta(days=365)
+    comunio = ComService()
+    comuniazo = Comuniazo()
+
+    u = User(id=1, name='Computer', username='Computer')
+    db.session.add(u)
+    db.session.commit()
+
+    clubs = comunio.get_clubs()
+    for club_id, clubname in clubs:
+
+        if not Club.query.filter_by(id=club_id).count():
+            c = Club(id=club_id, name=clubname)
+            db.session.add(c)
+
+        players = comunio.get_playersbyclubid(club_id)
         for player in players:
-            if player.club_id == 25:
-                # Player is not in Primera División
-                continue
-            set_player_data(com, player_id=player.id, playername=player.name)
+            player_id, playername, points, club_id, price, status, injured, position, games_played = player
+            if not Player.query.filter_by(id=player_id).count():
+                p = Player(id=player_id, name=playername, position=position, club=c)
+                db.session.add(p)
 
-    set_transactions(com)
-    update_market(com=com, user_id=user.id)
+            # Get prices from comunio service
+            # prices = com.get_player_price(playerid=player_id, from_date=year_ago.strftime('%Y-%m-%d'))
+            # for price_date, price in prices:
+            #     if not Price.query.filter_by(id=player_id).filter_by(date=price_date).count():
+            #         pr = Price(id=player_id, date=price_date, price=price)
+
+            dates, prices, points_all = comuniazo.get_player_data(playername=playername)
+
+            for date_price, price in zip(dates, prices):
+                if not Price.query.filter_by(id=player_id).filter_by(date=date_price).first():
+                    pr = Price(id=player_id, date=date_price, price=price)
+                    db.session.add(pr)
+
+            for season, gameday, points in points_all:
+                p = Points.query.filter_by(id=player_id).filter_by(gameday=gameday).filter_by(season=season).first()
+                if not p:
+                    pt = Points(id=player_id, season=season, gameday=gameday, points=points)
+                    db.session.add(pt)
+                elif p.points == 0:
+                    p.points = points
+                    db.session.add(p)
+
+        db.session.commit()
 
 
 def update_market(com=None, community_id=None, user_id=None):
