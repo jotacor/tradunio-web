@@ -20,6 +20,15 @@ def update_all(login, passwd):
     Update the database with new data.
     """
     db.create_all()
+    # New players, previous players
+    # New prices and points
+
+
+    # prices = com.get_player_price(playerid=player_id, from_date=year_ago.strftime('%Y-%m-%d'))
+    # for price_date, price in prices:
+    #     if not Price.query.filter_by(id=player_id).filter_by(date=price_date).count():
+    #         pr = Price(id=player_id, date=price_date, price=price)
+
     # com = Comunio(login, passwd, 'BBVA')
 
     # if not com.logged:
