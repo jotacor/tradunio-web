@@ -65,13 +65,7 @@ def init_database():
                 p = Player(id=player_id, name=playername, position=position, club=c)
                 db.session.add(p)
 
-            # Get prices from comunio service
-            # prices = com.get_player_price(playerid=player_id, from_date=year_ago.strftime('%Y-%m-%d'))
-            # for price_date, price in prices:
-            #     if not Price.query.filter_by(id=player_id).filter_by(date=price_date).count():
-            #         pr = Price(id=player_id, date=price_date, price=price)
-
-            dates, prices, points_all = comuniazo.get_player_data(playername=playername)
+            dates, prices, points_all = comuniazo.get_player_data(player_id=player_id)
 
             for date_price, price in zip(dates, prices):
                 if not Price.query.filter_by(id=player_id).filter_by(date=date_price).first():

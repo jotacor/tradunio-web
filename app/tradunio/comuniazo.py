@@ -17,71 +17,45 @@ class Comuniazo:
         self.url_comuniazo = 'http://www.comuniazo.com'
         self.session = requests.session()
 
-    def get_player_data(self, playername=None):
+    def get_player_data(self, player_id=None):
         """
         Get historical prices from a player from Comuniazo
-        :param playername: Name of the player.
+        :param player_id: Name of the player.
         :return: [dates], [prices], [gameday, points]
         """
-        self.headers.update({'Referer': self.url_comuniazo})
-        url_jugadores = self.url_comuniazo + '/comunio/jugadores/'
-        suffix, lastname = '', ''
-        count = 0
         dates, points, prices = list(), list(), list()
-        while True and len(dates) < 2:
-            playername = Comuniazo.check_exceptions(playername)
-            url_playername = re.sub("['.]", "", playername).replace(" ", "-")
-            req = self.session.get(url_jugadores + url_playername + suffix, headers=self.headers).content
-            dates_re = re.search("(\"[0-9 ][0-9] de \w+\",?,?)+", req)
-            season_re = re.search("[0-9][0-9]_[0-9][0-9]", req)
-            try:
-                dates = dates_re.group(0).replace('"', '').split(",")
-                dates = Comuniazo.translate_dates(dates)
-                season = season_re.group(0)
-            except AttributeError:
-                if count == 0:
-                    suffix = '-2'
-                    count += 1
-                    continue
-                elif count == 1:
-                    lastname = playername.split(" ")[1]
-                    playername = playername.split(" ")[0]
-                    suffix = ''
-                    count += 1
-                    continue
-                elif count == 2:
-                    playername = lastname
-                    count += 1
-                    continue
-                raise AttributeError
 
-            data_re = re.search("data: \[(([0-9nul]+,?)+)\]", req)
-            if data_re is None:
-                pass
-            for price in data_re.group(1).split(','):
-                try:
-                    prices.append(int(price))
-                except ValueError:
-                    # No price
-                    pass
+        self.headers.update({'Referer': self.url_comuniazo})
+        url_jugador = self.url_comuniazo + '/comunio/jugadores/' + str(player_id)
+        html = self.session.get(url_jugador, headers=self.headers).content
 
+        dates_re = re.search("(\"[0-9 ][0-9] de \w+\",?,?)+", html)
+        dates = dates_re.group(0).replace('"', '').split(",")
+        dates = Comuniazo.translate_dates(dates)
+
+        season_re = re.search("[0-9][0-9]_[0-9][0-9]", html)
+        season = season_re.group(0)
+
+        prices_re = re.search("data: \[(([0-9nul]+,?)+)\]", html)
+        for price in prices_re.group(1).split(','):
             try:
-                html = BeautifulSoup(req, "html.parser")
-                points_rows = html.find('table', {'class': 'points-list'}).find_all('tr')
-                for row in points_rows:
-                    gameday = int(row.td.text)
-                    if row.div:
-                        points.append([season, gameday, int(row.div.text)])
-                    else:
-                        points.append([season, gameday, 0])
-            except AttributeError:
-                # Player without points
+                prices.append(int(price))
+            except ValueError:
+                # No price
                 pass
 
-            if suffix == '-2' or len(dates) > 2:
-                break
-            else:
-                suffix = '-2'
+        try:
+            html = BeautifulSoup(html, "html.parser")
+            points_rows = html.find('table', {'class': 'points-list'}).find_all('tr')
+            for row in points_rows:
+                gameday = int(row.td.text)
+                if row.div:
+                    points.append([season, gameday, int(row.div.text)])
+                else:
+                    points.append([season, gameday, 0])
+        except AttributeError:
+            # Player without points
+            pass
 
         return dates, prices, points
 
@@ -137,5 +111,6 @@ class Comuniazo:
         :param playername: Name of the football player.
         :return: Corrected name.
         """
-        exceptions = {'Banega': 'Ever Banega', 'Mikel': u'Mikel González', u'Isma López': u'Ismael López'}
+        exceptions = {'Banega': 'Ever Banega', 'Mikel': u'Mikel González', u'Isma López': u'Ismael López',
+                      u'Jairo Morillas': u'Jairo Morilla', u'Tighadouini': u'Thigadouini'}
         return exceptions.get(playername, playername)
