@@ -7,8 +7,10 @@ class Player(db.Model):
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     name = db.Column(db.String(64))
     position = db.Column(db.String(64))
+    status = db.Column(db.String(64))
+    status_info = db.Column(db.String(64), nullable=True)
     prices = db.relationship('Price', lazy='dynamic', order_by='Price.date')
-    points = db.relationship('Points', lazy='dynamic', order_by='Points.gameday')
+    points = db.relationship('Points', lazy='dynamic', order_by='Points.gameday_id')
 
     def __repr__(self):
         return 'Name: %r, Position: %r, Club: %r, Points: %r, Price: %r' \
@@ -41,12 +43,23 @@ class Club(db.Model):
 class Points(db.Model):
     __tablename__ = 'points'
     id = db.Column(db.Integer, db.ForeignKey('players.id'), primary_key=True)
-    season = db.Column(db.Integer, primary_key=True, autoincrement=False)
-    gameday = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    gameday_id = db.Column(db.Integer, db.ForeignKey('gamedays.id'), primary_key=True)
     points = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
-        return 'Points: %r' % self.points
+        return 'Id: %r, Gameday id: %r, Points: %r' % (self.id, self.gameday_id, self.points)
+
+
+class Gameday(db.Model):
+    __tablename__ = 'gamedays'
+    id = db.Column(db.Integer, autoincrement=False, primary_key=True)
+    season = db.Column(db.String(64))
+    gameday = db.Column(db.Integer)
+    gamedate = db.Column(db.Date)
+    shifted = db.Column(db.Boolean, primary_key=True)
+
+    def __repr__(self):
+        return 'Id: %r, Season: %r, Gameday: %r, Gamedate %r' % (self.id, self.season, self.gameday, self.gamedate)
 
 
 class Price(db.Model):

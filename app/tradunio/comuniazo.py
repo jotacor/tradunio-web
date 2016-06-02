@@ -34,7 +34,7 @@ class Comuniazo:
         dates = Comuniazo.translate_dates(dates)
 
         season_re = re.search("[0-9][0-9]_[0-9][0-9]", html)
-        season = season_re.group(0)
+        season = season_re.group(0).replace("_", "")
 
         prices_re = re.search("data: \[(([0-9nul]+,?)+)\]", html)
         for price in prices_re.group(1).split(','):

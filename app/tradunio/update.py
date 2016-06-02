@@ -11,7 +11,7 @@ from comunio import Comunio
 from comuniazo import Comuniazo
 from comunio_service import Comunio as ComService
 from datetime import date, timedelta
-from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market, Owner, Community
+from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market, Owner, Community, Gameday
 import re
 
 
@@ -21,8 +21,9 @@ def update_all(login, passwd):
     """
     db.create_all()
     # New players, previous players
-    # New prices and points
 
+
+    # New prices and points
 
     # prices = com.get_player_price(playerid=player_id, from_date=year_ago.strftime('%Y-%m-%d'))
     # for price_date, price in prices:
@@ -56,10 +57,31 @@ def init_database():
     comunio = ComService()
     comuniazo = Comuniazo()
 
+    # Basic data info
     u = User(id=1, name='Computer', username='Computer')
-    db.session.add(u)
+    c = Club(id=1, name='Computer')
+    db.session.add_all([u, c])
     db.session.commit()
 
+    # Fill in all gamedays
+    gamedays = comunio.get_gamedays()
+    for gameday in gamedays:
+        number, comunio_gameday_id, gamedate, shifted = gameday
+        if gamedate.month >= 8 and gamedate.month <=12:
+            season = str(gamedate.year)[2:4] + str(gamedate.year + 1)[2:4]
+        else:
+            season = str(gamedate.year - 1)[2:4] + str(gamedate.year)[2:4]
+
+        if number <= 9:
+            number = '0%s' % number
+
+        gameday_id = season + str(number)
+        g = Gameday(id=gameday_id, season=season, gameday=number, gamedate=gamedate, shifted=shifted)
+        db.session.add(g)
+
+    db.session.commit()
+
+    # Fill in every player of every club
     clubs = comunio.get_clubs()
     for club_id, clubname in clubs:
 
@@ -69,9 +91,10 @@ def init_database():
 
         players = comunio.get_playersbyclubid(club_id)
         for player in players:
-            player_id, playername, points, club_id, price, status, injured, position, games_played = player
+            player_id, playername, points, club_id, price, status, status_info, position, games_played = player
             if not Player.query.filter_by(id=player_id).count():
-                p = Player(id=player_id, name=playername, position=position, club=c)
+                p = Player(id=player_id, name=playername, position=position, club=c, status=status,
+                           status_info=status_info)
                 db.session.add(p)
 
             dates, prices, points_all = comuniazo.get_player_data(player_id=player_id)
@@ -82,13 +105,16 @@ def init_database():
                     db.session.add(pr)
 
             for season, gameday, points in points_all:
-                p = Points.query.filter_by(id=player_id).filter_by(gameday=gameday).filter_by(season=season).first()
-                if not p:
-                    pt = Points(id=player_id, season=season, gameday=gameday, points=points)
+                if gameday <= 9:
+                    gameday = '0%s' % gameday
+
+                gameday_id = season + str(gameday)
+                if not Points.query.filter_by(id=player_id).filter_by(gameday_id=gameday_id).count():
+                    pt = Points(id=player_id, gameday_id=gameday_id, points=points)
                     db.session.add(pt)
-                elif p.points == 0:
-                    p.points = points
-                    db.session.add(p)
+                elif pt.points == 0:
+                    pt.points = points
+                    db.session.add(pt)
 
         db.session.commit()
 
