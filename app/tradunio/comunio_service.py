@@ -7,7 +7,7 @@ import re
 from suds.client import Client
 
 
-class Comunio:
+class ComService:
     def __init__(self):
         self.client = Client(url='http://www.comunio.es/soapservice.php?wsdl')
         self.today = date.today()

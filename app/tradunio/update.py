@@ -9,7 +9,7 @@ Created on April 11, 2016
 from app import db
 from comunio import Comunio
 from comuniazo import Comuniazo
-from comunio_service import Comunio as ComService
+from comunio_service import ComService
 from datetime import date, timedelta
 from ..models import User, Userdata, Transaction, Player, Club, Price, Points, Market, Owner, Community, Gameday
 import re
@@ -67,7 +67,7 @@ def init_database():
     gamedays = comunio.get_gamedays()
     for gameday in gamedays:
         number, comunio_gameday_id, gamedate, shifted = gameday
-        if gamedate.month >= 8 and gamedate.month <=12:
+        if 8 <= gamedate.month <= 12:
             season = str(gamedate.year)[2:4] + str(gamedate.year + 1)[2:4]
         else:
             season = str(gamedate.year - 1)[2:4] + str(gamedate.year)[2:4]

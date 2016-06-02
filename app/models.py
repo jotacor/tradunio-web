@@ -8,7 +8,7 @@ class Player(db.Model):
     name = db.Column(db.String(64))
     position = db.Column(db.String(64))
     status = db.Column(db.String(64))
-    status_info = db.Column(db.String(64), nullable=True)
+    status_info = db.Column(db.String(128), nullable=True)
     prices = db.relationship('Price', lazy='dynamic', order_by='Price.date')
     points = db.relationship('Points', lazy='dynamic', order_by='Points.gameday_id')
 
