@@ -87,7 +87,7 @@ class Comunio:
             req = self.session.get(self.urls['player'] % user_id, headers=headers).content
             html_h1 = BeautifulSoup(req, "html.parser").h1.text
             username = re.findall('\((.+)\)', html_h1)[0]
-            user_points = int(row.find_all('td')[3].text)
+            user_points = int(row.find_all('td')[3].text.replace('.', ''))
             team_value = int(row.find_all('td')[4].text.replace('.', ''))
             for user in money_bids['lista']['players']:
                 if user['id'] == user_id:
