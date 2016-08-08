@@ -89,10 +89,11 @@ class Comunio:
             username = re.findall('\((.+)\)', html_h1)[0]
             user_points = int(row.find_all('td')[2].text.replace('.', ''))
             team_value = int(row.find_all('td')[3].text.replace('.', ''))
-            for user in money_bids['data']['players']:
+            for user in money_bids['data']['users']:
                 if user['id'] == user_id:
                     money = int(user['dinero'].replace('.', ''))
                     max_bid = int(user['puja'].replace('.', ''))
+                    break
 
             info.append([name, username, int(user_id), user_points, team_value, money, max_bid])
 
