@@ -146,7 +146,7 @@ def set_player_data(com, player_id=None, playername=None):
     days_left = days_wo_price(player_id)
     prices, points_all = list(), list()
     if days_left:
-        dates, prices, points_all = Comunio.get_player_data(playername)
+        dates, prices, points_all = Comunio.get_player_data(playername, player_id)
         if days_left >= 365:
             days_left = len(dates)
 

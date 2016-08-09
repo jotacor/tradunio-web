@@ -123,7 +123,7 @@ class Comunio:
         return players_info
 
     @staticmethod
-    def get_player_data(playername=None):
+    def get_player_data(playername=None, player_id=None):
         """
         Get historical prices from a player from Comuniazo
         :param playername: Name of the player.
@@ -132,33 +132,16 @@ class Comunio:
         session = requests.session()
         url_comuniazo = 'http://www.comuniazo.com'
         headers.update({'Referer': url_comuniazo})
-        url_jugadores = url_comuniazo + '/comunio/jugadores/'
-        suffix, lastname = '', ''
-        count = 0
+        url_player = url_comuniazo + '/comunio/jugadores/' + str(player_id)
         dates, points, prices = list(), list(), list()
         while True and len(dates) < 2:
-            playername = Comunio.check_exceptions(playername)
-            req = session.get(url_jugadores + playername.replace(" ", "-").replace(".", "").replace("'", "") + suffix,
-                              headers=headers).content
+            req = session.get(url_player, headers=headers).content
             dates_re = re.search("(\"[0-9 ][0-9] de \w+\",?,?)+", req)
             try:
                 dates = dates_re.group(0).replace('"', '').split(",")
                 dates = Comunio.translate_dates(dates)
             except AttributeError:
-                if count == 0:
-                    suffix = '-2'
-                    count += 1
-                    continue
-                elif count == 1:
-                    lastname = playername.split(" ")[1]
-                    playername = playername.split(" ")[0]
-                    suffix = ''
-                    count += 1
-                    continue
-                elif count == 2:
-                    playername = lastname
-                    count += 1
-                    continue
+                continue
 
             data_re = re.search("data: \[(([0-9nul]+,?)+)\]", req)
             if data_re is None:
@@ -182,11 +165,6 @@ class Comunio:
             except AttributeError:
                 # Player without points
                 pass
-
-            if suffix == '-2' or len(dates) > 2:
-                break
-            else:
-                suffix = '-2'
 
         return dates, prices, points
 
